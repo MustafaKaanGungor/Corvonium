@@ -1,0 +1,12 @@
+{
+    "name": "corvonium",
+    "private": true,
+    "type": "module",
+    "packageManager": "pnpm@11.23.0",
+    "scripts": {
+        "dev": "pnpm --filter @corvonium/web dev",
+        "build": "pnpm -r build",
+        "test": "pnpm -r test",
+        "typecheck": "pnpm -r typecheck"
+    }
+}

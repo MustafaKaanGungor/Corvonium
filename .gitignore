@@ -1,0 +1,23 @@
+# dependencies — regenerated from the lockfile, never committed
+node_modules/
+
+# build output
+dist/
+build/
+
+# environment and secrets
+.env
+.env.*
+!.env.example
+
+# the server's actual database — real data, not code
+apps/server/data/
+
+# logs
+*.log
+pnpm-debug.log*
+
+# editors and OS junk
+.idea/
+.DS_Store
+Thumbs.db
