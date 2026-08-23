@@ -1,0 +1,935 @@
+<title>Corvonium Screens</title>
+<style>
+  /* ============ PAGE TOKENS (theme-aware) ============ */
+  :root {
+    --bg: #EDF1EC;
+    --panel: #FBFCFA;
+    --ink: #16201A;
+    --ink-dim: #5B6A60;
+    --ink-faint: #8C9990;
+    --rule: #D5DDD6;
+    --accent: #2C7A47;
+    --shadow: 0 24px 60px -20px rgba(18, 34, 24, .28);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0D1210;
+      --panel: #141A16;
+      --ink: #E7EEE8;
+      --ink-dim: #93A198;
+      --ink-faint: #6D7C73;
+      --rule: #242D27;
+      --accent: #4CC26A;
+      --shadow: 0 24px 60px -20px rgba(0, 0, 0, .7);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0D1210;
+    --panel: #141A16;
+    --ink: #E7EEE8;
+    --ink-dim: #93A198;
+    --ink-faint: #6D7C73;
+    --rule: #242D27;
+    --accent: #4CC26A;
+    --shadow: 0 24px 60px -20px rgba(0, 0, 0, .7);
+  }
+
+  /* ============ DEVICE TOKENS (fixed dark — the app is dark in every theme) ============ */
+  :root {
+    --d-bg: #0A0E0C;
+    --d-surface: #141A16;
+    --d-surface-2: #1C241E;
+    --d-line: #28322B;
+    --d-text: #E8EFE9;
+    --d-dim: #8A9990;
+    --d-faint: #5F6E66;
+    --d-green: #4CC26A;
+    --d-green-dim: #2A6B41;
+    --d-amber: #E0A040;
+    --d-red: #D9614F;
+    --p-corv: #4CC26A;
+    --p-thesis: #5B9BD5;
+    --p-home: #D98C4A;
+    --p-fit: #A67CC9;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: ui-serif, Georgia, "Iowan Old Style", "Times New Roman", serif;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 56px 24px 96px; }
+
+  /* ---- masthead ---- */
+  .mast { border-bottom: 1px solid var(--rule); padding-bottom: 28px; margin-bottom: 44px; }
+  .eyebrow {
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
+    font-size: 11px; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--accent); margin: 0 0 14px;
+  }
+  h1 { font-size: clamp(38px, 6vw, 62px); line-height: 1.02; margin: 0 0 16px; font-weight: 600; letter-spacing: -.02em; text-wrap: balance; }
+  .lede { font-size: 18px; color: var(--ink-dim); max-width: 60ch; margin: 0; }
+
+  /* ---- stage ---- */
+  .stage { display: flex; gap: 44px; align-items: flex-start; flex-wrap: wrap; }
+  .rail { flex: 1 1 240px; min-width: 240px; position: sticky; top: 32px; }
+  .rail h2 {
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
+    font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-faint);
+    margin: 0 0 14px; font-weight: 400;
+  }
+  .picker { display: flex; flex-direction: column; gap: 2px; margin-bottom: 14px; }
+  .pick {
+    appearance: none; background: none; border: 0; border-left: 2px solid var(--rule);
+    text-align: left; padding: 9px 14px; cursor: pointer; color: var(--ink-dim);
+    font-family: inherit; font-size: 15px; transition: .16s; line-height: 1.35;
+  }
+  .pick:hover { color: var(--ink); border-left-color: var(--ink-faint); }
+  .pick[aria-current="true"] { color: var(--ink); border-left-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, transparent); }
+  .pick small { display: block; font-family: ui-monospace, monospace; font-size: 10.5px; color: var(--ink-faint); letter-spacing: .04em; }
+  .pick:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .railhint { margin: 0 0 26px; font-size: 13.5px; color: var(--ink-faint); padding-left: 16px; }
+  .railhint b { color: var(--accent); }
+
+  .caption { border-top: 1px solid var(--rule); padding-top: 18px; }
+  .caption p { margin: 0; font-size: 14.5px; color: var(--ink-dim); }
+  .caption strong { color: var(--ink); font-weight: 600; }
+
+  /* ---- phone ---- */
+  .device-col { flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; gap: 16px; }
+  .device {
+    width: 372px; height: 752px; background: #050706; border-radius: 42px;
+    padding: 11px; box-shadow: var(--shadow), 0 0 0 1px rgba(255,255,255,.06);
+  }
+  .screen {
+    position: relative; width: 100%; height: 100%; border-radius: 32px; overflow: hidden;
+    background: var(--d-bg); color: var(--d-text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 14px; line-height: 1.45;
+  }
+  .view { position: absolute; inset: 0; display: none; flex-direction: column; }
+  .view.on { display: flex; }
+  .device-note { font-size: 13px; color: var(--ink-faint); font-family: ui-monospace, monospace; letter-spacing: .04em; }
+
+  /* ---- app chrome ---- */
+  .appbar { padding: 16px 18px 10px; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex: 0 0 auto; }
+  .appbar h3 { margin: 0; font-size: 19px; font-weight: 650; letter-spacing: -.01em; }
+  .appbar .sub { font-size: 12px; color: var(--d-dim); margin-top: 1px; }
+  .gear { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--d-line); display: grid; place-items: center; color: var(--d-dim); font-size: 13px; flex: 0 0 auto; cursor: pointer; }
+
+  .navbar {
+    flex: 0 0 auto; display: grid; grid-template-columns: repeat(4, 1fr);
+    border-top: 1px solid var(--d-line); background: var(--d-surface); padding: 7px 0 9px;
+  }
+  .nav { appearance: none; background: none; border: 0; cursor: pointer; display: grid; gap: 3px; justify-items: center;
+         color: var(--d-faint); font-family: inherit; font-size: 10.5px; padding: 3px 0; }
+  .nav i { font-style: normal; font-size: 16px; line-height: 1; opacity: .85; }
+  .nav[aria-current="true"] { color: var(--d-green); }
+  .nav:focus-visible { outline: 2px solid var(--d-green); outline-offset: -2px; }
+
+  .fab {
+    position: absolute; right: 18px; bottom: 74px; width: 52px; height: 52px; border-radius: 50%;
+    background: var(--d-green); color: #06210F; border: 0; font-size: 26px; font-weight: 400; cursor: pointer;
+    box-shadow: 0 8px 24px -6px rgba(76,194,106,.5); display: grid; place-items: center; line-height: 1; padding-bottom: 3px;
+  }
+
+  /* ---- calendar ---- */
+  .modetog { display: flex; background: var(--d-surface-2); border-radius: 8px; padding: 2px; gap: 2px; }
+  .modetog button {
+    appearance: none; border: 0; background: none; color: var(--d-faint); cursor: pointer;
+    font-family: inherit; font-size: 11px; font-weight: 600; padding: 5px 11px; border-radius: 6px; letter-spacing: .02em;
+  }
+  .modetog button[aria-pressed="true"] { background: var(--d-green); color: #06210F; }
+
+  .dow { display: grid; grid-template-columns: repeat(7, 1fr); padding: 0 6px 4px; flex: 0 0 auto; }
+  .dow span { text-align: center; font-size: 10px; color: var(--d-faint); letter-spacing: .08em; text-transform: uppercase; }
+
+  .grid { flex: 1 1 auto; display: grid; grid-template-rows: repeat(6, 1fr); padding: 0 6px 6px; gap: 2px; }
+  .wk { position: relative; }
+  .wk-days { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+  .cell { position: relative; background: var(--d-surface); border-radius: 6px; padding: 4px 0 0; overflow: hidden; }
+  .cell.out { background: transparent; }
+  .cell.out .dn { color: var(--d-faint); opacity: .5; }
+  .dn { display: block; text-align: center; font-size: 11px; color: var(--d-dim); font-variant-numeric: tabular-nums; }
+  .cell.today .dn { color: #06210F; background: var(--d-green); width: 19px; height: 19px; line-height: 19px; border-radius: 50%; margin: 0 auto; font-weight: 700; }
+  .cell.sel { box-shadow: inset 0 0 0 1.5px var(--d-green-dim); }
+
+  .wk-lanes {
+    position: absolute; left: 0; right: 0; top: 22px; bottom: 2px;
+    display: grid; grid-template-columns: repeat(7, 1fr); grid-auto-rows: 17px; gap: 2px;
+    pointer-events: none;
+  }
+  .brick {
+    font-size: 10px; line-height: 15px; height: 15px; padding: 0 5px; border-radius: 4px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #07120C; font-weight: 600;
+    margin: 0 1px;
+  }
+  .brick.corv { background: var(--p-corv); }
+  .brick.thesis { background: var(--p-thesis); }
+  .brick.home { background: var(--p-home); }
+  .brick.fit { background: var(--p-fit); }
+  .brick.cont-r { border-top-right-radius: 0; border-bottom-right-radius: 0; margin-right: 0; }
+  .brick.cont-l { border-top-left-radius: 0; border-bottom-left-radius: 0; margin-left: 0; }
+  .brick.due { background: transparent; color: var(--p-thesis); box-shadow: inset 0 0 0 1px currentColor; }
+  .brick.due.home { color: var(--p-home); }
+  .brick.done { opacity: .38; text-decoration: line-through; }
+  .more { font-size: 9.5px; color: var(--d-faint); padding: 0 6px; line-height: 15px; }
+
+  /* effort mode */
+  .eff {
+    height: calc(100% - 22px); display: flex; flex-direction: column;
+    justify-content: flex-end; align-items: center; gap: 3px; padding: 0 5px 5px;
+  }
+  .eff-bar { width: 100%; background: var(--d-green); border-radius: 3px; }
+  .eff-track { width: 100%; height: 3px; background: var(--d-line); border-radius: 3px; }
+  .eff-h { font-size: 9px; color: var(--d-dim); font-variant-numeric: tabular-nums; font-family: ui-monospace, monospace; line-height: 1; }
+
+  .effsum { flex: 0 0 auto; margin: 0 12px 6px; padding: 9px 12px; background: var(--d-surface); border-radius: 10px;
+            display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
+  .effsum b { font-size: 15px; font-variant-numeric: tabular-nums; font-family: ui-monospace, monospace; }
+  .effsum span { font-size: 11px; color: var(--d-dim); }
+  .effsum .go { color: var(--d-green); font-size: 12px; font-weight: 600; }
+
+  /* ---- lists ---- */
+  .scroller { flex: 1 1 auto; overflow-y: auto; padding: 0 14px 12px; }
+  .scroller::-webkit-scrollbar { width: 0; }
+  .ghdr { font-size: 10px; letter-spacing: .13em; text-transform: uppercase; color: var(--d-faint); margin: 16px 0 7px; font-weight: 600; }
+  .ghdr:first-child { margin-top: 6px; }
+  .row { display: flex; gap: 11px; align-items: flex-start; padding: 9px 10px; background: var(--d-surface); border-radius: 9px; margin-bottom: 5px; cursor: pointer; }
+  .ck { width: 19px; height: 19px; border-radius: 50%; border: 1.5px solid var(--d-faint); flex: 0 0 auto; margin-top: 1px; cursor: pointer; }
+  .ck.on { background: var(--d-green); border-color: var(--d-green); position: relative; }
+  .ck.on::after { content: "✓"; position: absolute; inset: 0; display: grid; place-items: center; color: #06210F; font-size: 12px; font-weight: 700; }
+  .rowbody { min-width: 0; flex: 1 1 auto; }
+  .rowtitle { font-size: 14px; line-height: 1.3; }
+  .rowsub { font-size: 11.5px; color: var(--d-dim); margin-top: 2px; }
+  .rowsub.late { color: var(--d-red); }
+  .rowsub.soon { color: var(--d-amber); }
+  .dot { width: 7px; height: 7px; border-radius: 50%; flex: 0 0 auto; margin-top: 7px; }
+  .seeall { display: block; width: 100%; text-align: left; background: none; border: 0; color: var(--d-green);
+            font-family: inherit; font-size: 12.5px; padding: 5px 10px 3px; cursor: pointer; font-weight: 600; }
+
+  .cta { flex: 0 0 auto; margin: 8px 14px 12px; }
+  .btn { display: block; width: 100%; border: 0; border-radius: 13px; padding: 15px; cursor: pointer;
+         font-family: inherit; font-size: 15.5px; font-weight: 650; letter-spacing: .01em; }
+  .btn.primary { background: var(--d-green); color: #06210F; }
+  .btn.ghost { background: var(--d-surface-2); color: var(--d-text); }
+  .btn.small { padding: 12px; font-size: 14px; border-radius: 11px; }
+  .btn.danger { background: rgba(217,97,79,.13); color: var(--d-red); }
+
+  /* ---- filters: two axes, two rows ---- */
+  .filterbar { padding: 0 14px 10px; display: grid; gap: 7px; flex: 0 0 auto; }
+  .segrow { display: grid; gap: 4px; }
+  .segrow.n4 { grid-template-columns: repeat(4, 1fr); }
+  .segrow.n3 { grid-template-columns: repeat(3, 1fr); }
+  .segrow button {
+    background: var(--d-surface); border: 1px solid var(--d-line); color: var(--d-dim);
+    border-radius: 9px; padding: 8px 2px; font-size: 11.5px; font-family: inherit; cursor: pointer;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .segrow button.on { background: var(--d-green); border-color: var(--d-green); color: #06210F; font-weight: 650; }
+  .segrow button:focus-visible { outline: 2px solid var(--d-green); outline-offset: 1px; }
+
+  .projrow { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 1px; }
+  .projrow::-webkit-scrollbar { height: 0; }
+  .pchip {
+    flex: 0 0 auto; display: flex; align-items: center; gap: 6px;
+    background: var(--d-surface); border: 1px solid var(--d-line); color: var(--d-dim);
+    border-radius: 20px; padding: 5px 11px; font-size: 11.5px; font-family: inherit; cursor: pointer; white-space: nowrap;
+  }
+  .pchip i { width: 7px; height: 7px; border-radius: 50%; display: block; flex: 0 0 auto; }
+  .pchip.on { border-color: var(--d-green); color: var(--d-text); }
+  .pchip:focus-visible { outline: 2px solid var(--d-green); outline-offset: 1px; }
+
+  /* ---- work mode ---- */
+  .wm { padding: 22px 18px 0; text-align: center; flex: 0 0 auto; }
+  .wm-lab { font-size: 10.5px; letter-spacing: .18em; color: var(--d-dim); text-transform: uppercase; }
+  .wm-total { font-size: 40px; font-weight: 300; font-variant-numeric: tabular-nums; font-family: ui-monospace, "SF Mono", Consolas, monospace; letter-spacing: -.02em; margin-top: 2px; }
+  .wm-card { margin: 16px 18px 0; background: linear-gradient(180deg, #17301F, #12231A); border: 1px solid #204a30; border-radius: 16px; padding: 15px; text-align: center; flex: 0 0 auto; }
+  .pill { display: inline-block; background: var(--d-green); color: #06210F; font-size: 10.5px; font-weight: 800; letter-spacing: .12em; padding: 4px 13px; border-radius: 20px; }
+  .wm-seg { font-size: 33px; font-weight: 300; font-variant-numeric: tabular-nums; font-family: ui-monospace, Consolas, monospace; margin: 7px 0 3px; }
+  .wm-item { font-size: 13px; color: var(--d-text); }
+  .wm-item small { display: block; color: var(--d-dim); font-size: 11px; margin-top: 1px; }
+  .seg { display: flex; align-items: center; gap: 10px; background: var(--d-surface); border-radius: 9px; padding: 9px 11px; margin-bottom: 5px; }
+  .seg .nm { flex: 1 1 auto; min-width: 0; font-size: 13px; }
+  .seg .nm small { display: block; color: var(--d-dim); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .seg .tm { font-variant-numeric: tabular-nums; font-family: ui-monospace, monospace; font-size: 13px; }
+  .live { background: rgba(76,194,106,.15); color: var(--d-green); font-size: 9.5px; font-weight: 700; padding: 2px 7px; border-radius: 10px; }
+
+  /* ---- summary / stats ---- */
+  .center { text-align: center; padding: 26px 18px 0; flex: 0 0 auto; }
+  .center h4 { margin: 0 0 5px; font-size: 22px; font-weight: 650; }
+  .center p { margin: 0; color: var(--d-dim); font-size: 13px; }
+  .ring { display: block; margin: 18px auto 6px; }
+  .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 12px 18px 0; flex: 0 0 auto; }
+  .tile { background: var(--d-surface); border-radius: 12px; padding: 11px; text-align: center; }
+  .tile span { display: block; font-size: 10.5px; color: var(--d-dim); letter-spacing: .05em; }
+  .tile b { display: block; font-size: 19px; font-weight: 600; font-variant-numeric: tabular-nums; font-family: ui-monospace, monospace; margin-top: 3px; }
+  .tile b.g { color: var(--d-green); } .tile b.a { color: var(--d-amber); }
+
+  .bar-row { display: grid; grid-template-columns: 74px 1fr 52px; align-items: center; gap: 9px; margin-bottom: 8px; font-size: 12px; }
+  .bar-track { height: 7px; background: var(--d-surface-2); border-radius: 4px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 4px; }
+  .bar-row .v { text-align: right; font-variant-numeric: tabular-nums; font-family: ui-monospace, monospace; color: var(--d-dim); font-size: 11.5px; }
+  .note { font-size: 11px; color: var(--d-faint); line-height: 1.5; margin: 10px 0 0; }
+
+  /* ---- sheets ---- */
+  .sheet-bg { position: absolute; inset: 0; background: rgba(0,0,0,.55); opacity: 0; pointer-events: none; transition: .2s; z-index: 5; }
+  .sheet {
+    position: absolute; left: 0; right: 0; bottom: 0; background: var(--d-surface); z-index: 6;
+    border-radius: 22px 22px 0 0; padding: 8px 18px 22px; transform: translateY(102%);
+    transition: transform .26s cubic-bezier(.3,.9,.4,1);
+    max-height: 82%; overflow-y: auto; border-top: 1px solid var(--d-line);
+  }
+  #sheet-day { max-height: 88%; min-height: 74%; }
+  .sheet::-webkit-scrollbar { width: 0; }
+  .open .sheet-bg { opacity: 1; pointer-events: auto; }
+  .open .sheet { transform: translateY(0); }
+  .grab { width: 34px; height: 4px; background: var(--d-line); border-radius: 3px; margin: 4px auto 14px; }
+  .sheet h4 { margin: 0 0 3px; font-size: 18px; font-weight: 650; line-height: 1.25; }
+  .meta { display: flex; align-items: center; gap: 9px; padding: 10px 0; border-bottom: 1px solid var(--d-line); font-size: 13px; }
+  .meta .k { color: var(--d-dim); width: 76px; flex: 0 0 auto; font-size: 12px; }
+  .sw { width: 38px; height: 22px; border-radius: 12px; background: var(--d-green); position: relative; flex: 0 0 auto; }
+  .sw::after { content: ""; position: absolute; width: 18px; height: 18px; border-radius: 50%; background: #06210F; top: 2px; right: 2px; }
+  .subt { display: flex; align-items: center; gap: 10px; padding: 7px 0; font-size: 13px; }
+  .subt .ck { width: 17px; height: 17px; margin: 0; }
+  .subt.done { color: var(--d-faint); text-decoration: line-through; }
+  .sheet-acts { display: flex; gap: 8px; margin-top: 16px; }
+  .sheet-acts .btn { flex: 1 1 0; }
+
+  /* ---- capture ---- */
+  .cap-field {
+    background: var(--d-surface-2); border: 1px solid var(--d-line); border-radius: 13px;
+    padding: 13px 14px; display: flex; gap: 11px; align-items: flex-start; margin-bottom: 13px;
+  }
+  .cap-text { flex: 1 1 auto; font-size: 15px; line-height: 1.5; min-width: 0; }
+  .mark { border-bottom: 2px solid var(--d-green); color: var(--d-green); padding-bottom: 1px; }
+  .mark.p { border-color: var(--p-home); color: var(--p-home); }
+  .mic { width: 36px; height: 36px; border-radius: 50%; background: var(--d-green); color: #06210F;
+         border: 0; display: grid; place-items: center; font-size: 16px; flex: 0 0 auto; cursor: pointer; }
+  .cap-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 4px; }
+  .cchip {
+    display: flex; align-items: center; gap: 7px; background: rgba(76,194,106,.13);
+    border: 1px solid rgba(76,194,106,.4); color: var(--d-green); border-radius: 8px;
+    padding: 6px 10px; font-size: 12px; font-family: inherit; cursor: pointer;
+  }
+  .cchip.proj { background: rgba(217,140,74,.13); border-color: rgba(217,140,74,.4); color: var(--p-home); }
+  .cchip b { font-weight: 600; }
+  .cchip .x { opacity: .65; font-size: 13px; }
+  .cap-hint { font-size: 11px; color: var(--d-faint); margin: 0 0 14px; line-height: 1.5; }
+
+  /* ---- notes below ---- */
+  .notes { margin-top: 80px; border-top: 1px solid var(--rule); padding-top: 40px; }
+  .notes h2 { font-size: 13px; font-family: ui-monospace, monospace; letter-spacing: .16em; text-transform: uppercase;
+              color: var(--ink-faint); font-weight: 400; margin: 0 0 26px; }
+  .notegrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(268px, 1fr)); gap: 34px 40px; }
+  .note-item h3 { font-size: 19px; margin: 0 0 8px; font-weight: 600; letter-spacing: -.01em; }
+  .note-item p { margin: 0; font-size: 15px; color: var(--ink-dim); }
+  .note-item .tagline { font-family: ui-monospace, monospace; font-size: 10.5px; letter-spacing: .13em;
+                        text-transform: uppercase; color: var(--accent); margin: 0 0 7px; }
+
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+  @media (max-width: 900px) {
+    .stage { flex-direction: column-reverse; align-items: center; }
+    .rail { position: static; width: 100%; max-width: 372px; }
+    .wrap { padding: 40px 18px 70px; }
+  }
+  @media (max-width: 420px) {
+    .device { width: 100%; height: auto; aspect-ratio: 372 / 752; padding: 8px; border-radius: 30px; }
+  }
+</style>
+
+<div class="wrap">
+  <header class="mast">
+    <p class="eyebrow">Interface study · v1 mobile</p>
+    <h1>Corvonium</h1>
+    <p class="lede">Every screen in the plan, drawn at real phone dimensions. Tap through the prototype — the navbar, the mode toggle, the filters, the checkboxes and the sheets all work.</p>
+  </header>
+
+  <div class="stage">
+    <div class="rail">
+      <h2>Screens</h2>
+      <div class="picker">
+        <button class="pick" data-go="cal" aria-current="true">Calendar · Plan<small>§3.2 — bricks</small></button>
+        <button class="pick" data-go="effort">Calendar · Effort<small>§3.2 — intensity</small></button>
+        <button class="pick" data-go="today">Today<small>§3.3 — capped groups</small></button>
+        <button class="pick" data-go="tasks">Task view<small>§3.4 — the matrix</small></button>
+        <button class="pick" data-go="work">Work Mode<small>§3.5 — live session</small></button>
+        <button class="pick" data-go="summary">Session summary<small>§3.5 — on End</small></button>
+        <button class="pick" data-go="stats">Stats<small>§3.6 — behind Effort</small></button>
+      </div>
+      <p class="railhint">Tap <b>+</b> on Calendar or Tasks for the capture sheet.</p>
+      <div class="caption">
+        <p id="cap"><strong>Calendar, Plan mode.</strong> Six rows by seven, always. The Family visit brick is cut at the week boundary and picked up on the next row.</p>
+      </div>
+    </div>
+
+    <div class="device-col">
+      <div class="device">
+        <div class="screen" id="screen">
+
+          <!-- ============ CALENDAR · PLAN ============ -->
+          <section class="view on" data-view="cal">
+            <div class="appbar">
+              <div>
+                <h3>August 2026 ▾</h3>
+                <div class="sub">Saturday 15 · today</div>
+              </div>
+              <div class="modetog">
+                <button data-mode="plan" aria-pressed="true">Plan</button>
+                <button data-mode="effort" aria-pressed="false">Effort</button>
+              </div>
+            </div>
+            <div class="filterbar" style="padding-bottom:6px">
+              <div class="projrow">
+                <button class="pchip on" data-proj>All projects</button>
+                <button class="pchip" data-proj><i style="background:var(--p-corv)"></i>Corvonium</button>
+                <button class="pchip" data-proj><i style="background:var(--p-thesis)"></i>Thesis</button>
+                <button class="pchip" data-proj><i style="background:var(--p-home)"></i>Home</button>
+                <button class="pchip" data-proj><i style="background:var(--p-fit)"></i>Fitness</button>
+              </div>
+            </div>
+            <div class="dow"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
+            <div class="grid">
+              <div class="wk">
+                <div class="wk-days">
+                  <div class="cell out"><span class="dn">27</span></div><div class="cell out"><span class="dn">28</span></div>
+                  <div class="cell out"><span class="dn">29</span></div><div class="cell out"><span class="dn">30</span></div>
+                  <div class="cell out"><span class="dn">31</span></div><div class="cell"><span class="dn">1</span></div>
+                  <div class="cell"><span class="dn">2</span></div>
+                </div>
+                <div class="wk-lanes">
+                  <div class="brick corv done" style="grid-column:1/6; grid-row:1">Sprint: sync spike</div>
+                  <div class="brick fit" style="grid-column:6/8; grid-row:1">Long run</div>
+                </div>
+              </div>
+
+              <div class="wk">
+                <div class="wk-days">
+                  <div class="cell"><span class="dn">3</span></div><div class="cell"><span class="dn">4</span></div>
+                  <div class="cell"><span class="dn">5</span></div><div class="cell"><span class="dn">6</span></div>
+                  <div class="cell"><span class="dn">7</span></div><div class="cell"><span class="dn">8</span></div>
+                  <div class="cell"><span class="dn">9</span></div>
+                </div>
+                <div class="wk-lanes">
+                  <div class="brick thesis" style="grid-column:1/4; grid-row:1">Reading week</div>
+                  <div class="brick corv" style="grid-column:5/8; grid-row:1">RxDB spike</div>
+                  <div class="brick home due" style="grid-column:2/3; grid-row:2">Rent</div>
+                  <div class="brick fit" style="grid-column:6/7; grid-row:2">Gym</div>
+                </div>
+              </div>
+
+              <div class="wk">
+                <div class="wk-days">
+                  <div class="cell"><span class="dn">10</span></div><div class="cell"><span class="dn">11</span></div>
+                  <div class="cell"><span class="dn">12</span></div><div class="cell"><span class="dn">13</span></div>
+                  <div class="cell"><span class="dn">14</span></div><div class="cell today sel" data-sheet="day"><span class="dn">15</span></div>
+                  <div class="cell"><span class="dn">16</span></div>
+                </div>
+                <div class="wk-lanes">
+                  <div class="brick home cont-r" style="grid-column:4/8; grid-row:1">Family visit ›</div>
+                  <div class="brick corv" style="grid-column:1/3; grid-row:2">Lane algorithm</div>
+                  <div class="brick thesis due" style="grid-column:6/7; grid-row:2">Invoice</div>
+                  <div class="brick fit" style="grid-column:6/7; grid-row:3">Gym</div>
+                  <div class="more" style="grid-column:5/6; grid-row:3; pointer-events:auto; cursor:pointer" data-sheet="day">+2 more</div>
+                </div>
+              </div>
+
+              <div class="wk">
+                <div class="wk-days">
+                  <div class="cell"><span class="dn">17</span></div><div class="cell"><span class="dn">18</span></div>
+                  <div class="cell"><span class="dn">19</span></div><div class="cell"><span class="dn">20</span></div>
+                  <div class="cell"><span class="dn">21</span></div><div class="cell"><span class="dn">22</span></div>
+                  <div class="cell"><span class="dn">23</span></div>
+                </div>
+                <div class="wk-lanes">
+                  <div class="brick home cont-l" style="grid-column:1/3; grid-row:1">› Family visit</div>
+                  <div class="brick corv" style="grid-column:3/6; grid-row:1">Server phase</div>
+                  <div class="brick thesis due" style="grid-column:4/5; grid-row:2">Draft due</div>
+                  <div class="brick home" style="grid-column:2/3; grid-row:2">Dentist</div>
+                </div>
+              </div>
+
+              <div class="wk">
+                <div class="wk-days">
+                  <div class="cell"><span class="dn">24</span></div><div class="cell"><span class="dn">25</span></div>
+                  <div class="cell"><span class="dn">26</span></div><div class="cell"><span class="dn">27</span></div>
+                  <div class="cell"><span class="dn">28</span></div><div class="cell"><span class="dn">29</span></div>
+                  <div class="cell"><span class="dn">30</span></div>
+                </div>
+                <div class="wk-lanes">
+                  <div class="brick fit" style="grid-column:1/2; grid-row:1">Gym</div>
+                  <div class="brick corv" style="grid-column:3/7; grid-row:1">Phone on LAN</div>
+                  <div class="brick thesis" style="grid-column:5/6; grid-row:2">Supervisor</div>
+                </div>
+              </div>
+
+              <div class="wk">
+                <div class="wk-days">
+                  <div class="cell"><span class="dn">31</span></div><div class="cell out"><span class="dn">1</span></div>
+                  <div class="cell out"><span class="dn">2</span></div><div class="cell out"><span class="dn">3</span></div>
+                  <div class="cell out"><span class="dn">4</span></div><div class="cell out"><span class="dn">5</span></div>
+                  <div class="cell out"><span class="dn">6</span></div>
+                </div>
+                <div class="wk-lanes">
+                  <div class="brick corv" style="grid-column:1/3; grid-row:1">Docker</div>
+                </div>
+              </div>
+            </div>
+            <button class="fab" data-sheet="add" aria-label="Add item">+</button>
+            <div class="navbar">
+              <button class="nav" data-go="cal" aria-current="true"><i>▦</i>Calendar</button>
+              <button class="nav" data-go="today"><i>◉</i>Today</button>
+              <button class="nav" data-go="tasks"><i>☰</i>Tasks</button>
+              <button class="nav" data-go="stats"><i>◔</i>Stats</button>
+            </div>
+          </section>
+
+          <!-- ============ CALENDAR · EFFORT ============ -->
+          <section class="view" data-view="effort">
+            <div class="appbar">
+              <div>
+                <h3>August 2026 ▾</h3>
+                <div class="sub">Focused work per day</div>
+              </div>
+              <div class="modetog">
+                <button data-mode="plan" aria-pressed="false">Plan</button>
+                <button data-mode="effort" aria-pressed="true">Effort</button>
+              </div>
+            </div>
+            <div class="filterbar" style="padding-bottom:6px">
+              <div class="projrow">
+                <button class="pchip on" data-proj>All projects</button>
+                <button class="pchip" data-proj><i style="background:var(--p-corv)"></i>Corvonium</button>
+                <button class="pchip" data-proj><i style="background:var(--p-thesis)"></i>Thesis</button>
+                <button class="pchip" data-proj><i style="background:var(--p-home)"></i>Home</button>
+                <button class="pchip" data-proj><i style="background:var(--p-fit)"></i>Fitness</button>
+              </div>
+            </div>
+            <div class="dow"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
+            <div class="grid" id="effgrid"></div>
+            <div class="effsum" data-go="stats">
+              <div>
+                <b>62h 40m</b>
+                <span style="display:block">worked in August · 89% focus</span>
+              </div>
+              <span class="go">Stats →</span>
+            </div>
+            <div class="navbar">
+              <button class="nav" data-go="cal" aria-current="true"><i>▦</i>Calendar</button>
+              <button class="nav" data-go="today"><i>◉</i>Today</button>
+              <button class="nav" data-go="tasks"><i>☰</i>Tasks</button>
+              <button class="nav" data-go="stats"><i>◔</i>Stats</button>
+            </div>
+          </section>
+
+          <!-- ============ TODAY ============ -->
+          <section class="view" data-view="today">
+            <div class="appbar">
+              <div>
+                <h3>Today</h3>
+                <div class="sub">Saturday 15 August</div>
+              </div>
+              <div class="gear" title="Settings">⚙</div>
+            </div>
+            <div class="scroller">
+              <div class="ghdr">Missed</div>
+              <div class="row"><div class="ck" data-ck></div><div class="rowbody"><div class="rowtitle">Write the sync spec</div><div class="rowsub late">Yesterday</div></div><div class="dot" style="background:var(--p-corv)"></div></div>
+              <div class="row"><div class="ck" data-ck></div><div class="rowbody"><div class="rowtitle">Call the landlord</div><div class="rowsub late">3 days ago</div></div><div class="dot" style="background:var(--p-home)"></div></div>
+              <div class="row"><div class="ck" data-ck></div><div class="rowbody"><div class="rowtitle">Renew the domain</div><div class="rowsub late">Last week</div></div><div class="dot" style="background:var(--p-corv)"></div></div>
+              <button class="seeall" data-go="tasks">See all 9 →</button>
+
+              <div class="ghdr">Events</div>
+              <div class="row"><div class="ck" data-ck></div><div class="rowbody"><div class="rowtitle">Standup</div><div class="rowsub">09:00 – 09:15</div></div><div class="dot" style="background:var(--p-corv)"></div></div>
+              <div class="row"><div class="ck" data-ck></div><div class="rowbody"><div class="rowtitle">Coffee with Deniz</div><div class="rowsub">16:30</div></div><div class="dot" style="background:var(--p-home)"></div></div>
+
+              <div class="ghdr">Due today</div>
+              <div class="row"><div class="ck" data-ck></div><div class="rowbody"><div class="rowtitle">Send the invoice</div><div class="rowsub soon">Due 17:00</div></div><div class="dot" style="background:var(--p-thesis)"></div></div>
+
+              <div class="ghdr">All day</div>
+              <div class="row"><div class="ck" data-ck></div><div class="rowbody"><div class="rowtitle">Family visit</div><div class="rowsub">13 – 18 August</div></div><div class="dot" style="background:var(--p-home)"></div></div>
+
+              <div class="ghdr">Anytime</div>
+              <div class="row"><div class="ck" data-ck></div><div class="rowbody"><div class="rowtitle">Sketch the brick lane algorithm</div></div><div class="dot" style="background:var(--p-corv)"></div></div>
+              <div class="row"><div class="ck" data-ck></div><div class="rowbody"><div class="rowtitle">Read the RxDB replication docs</div></div><div class="dot" style="background:var(--p-corv)"></div></div>
+              <div class="row"><div class="ck" data-ck></div><div class="rowbody"><div class="rowtitle">Compare Tauri storage adapters</div></div><div class="dot" style="background:var(--p-corv)"></div></div>
+              <button class="seeall" data-go="tasks">See all 23 →</button>
+            </div>
+            <div class="cta"><button class="btn primary" data-go="work">▶  Start the Day</button></div>
+            <div class="navbar">
+              <button class="nav" data-go="cal"><i>▦</i>Calendar</button>
+              <button class="nav" data-go="today" aria-current="true"><i>◉</i>Today</button>
+              <button class="nav" data-go="tasks"><i>☰</i>Tasks</button>
+              <button class="nav" data-go="stats"><i>◔</i>Stats</button>
+            </div>
+          </section>
+
+          <!-- ============ TASK VIEW ============ -->
+          <section class="view" data-view="tasks">
+            <div class="appbar">
+              <div><h3>Tasks</h3><div class="sub">41 open</div></div>
+            </div>
+            <div class="filterbar">
+              <div class="segrow n4">
+                <button class="on" data-filter>All time</button>
+                <button data-filter>Missed</button>
+                <button data-filter>This week</button>
+                <button data-filter>Done</button>
+              </div>
+              <div class="projrow">
+                <button class="pchip on" data-proj>All projects</button>
+                <button class="pchip" data-proj><i style="background:var(--p-corv)"></i>Corvonium</button>
+                <button class="pchip" data-proj><i style="background:var(--p-thesis)"></i>Thesis</button>
+                <button class="pchip" data-proj><i style="background:var(--p-home)"></i>Home</button>
+                <button class="pchip" data-proj><i style="background:var(--p-fit)"></i>Fitness</button>
+              </div>
+            </div>
+            <div class="scroller">
+              <div class="ghdr">Routine</div>
+              <div class="row" data-sheet="item"><div class="ck" data-ck></div><div class="rowbody"><div class="rowtitle">Gym</div><div class="rowsub">Every day</div></div><div class="dot" style="background:var(--p-fit)"></div></div>
+              <div class="row"><div class="ck on" data-ck></div><div class="rowbody"><div class="rowtitle">Read 20 pages</div><div class="rowsub">Every day</div></div><div class="dot" style="background:var(--p-thesis)"></div></div>
+              <div class="row"><div class="ck" data-ck></div><div class="rowbody"><div class="rowtitle">Take the garbage out</div><div class="rowsub">Every 2 days</div></div><div class="dot" style="background:var(--p-home)"></div></div>
+              <div class="row"><div class="ck" data-ck></div><div class="rowbody"><div class="rowtitle">Standup</div><div class="rowsub">Every weekday · 09:00</div></div><div class="dot" style="background:var(--p-corv)"></div></div>
+
+              <div class="ghdr">Urgent &amp; important</div>
+              <div class="row"><div class="ck" data-ck></div><div class="rowbody"><div class="rowtitle">Send the invoice</div><div class="rowsub soon">Due today, 17:00</div></div><div class="dot" style="background:var(--p-thesis)"></div></div>
+              <div class="row"><div class="ck" data-ck></div><div class="rowbody"><div class="rowtitle">Write the sync spec</div><div class="rowsub late">Missed · yesterday</div></div><div class="dot" style="background:var(--p-corv)"></div></div>
+
+              <div class="ghdr">Important, not urgent</div>
+              <div class="row" data-sheet="item"><div class="ck" data-ck></div><div class="rowbody"><div class="rowtitle">Thesis draft</div><div class="rowsub">Due 20 August</div></div><div class="dot" style="background:var(--p-thesis)"></div></div>
+              <div class="row"><div class="ck" data-ck></div><div class="rowbody"><div class="rowtitle">Sketch the brick lane algorithm</div></div><div class="dot" style="background:var(--p-corv)"></div></div>
+              <div class="row"><div class="ck" data-ck></div><div class="rowbody"><div class="rowtitle">Set up pnpm workspaces</div></div><div class="dot" style="background:var(--p-corv)"></div></div>
+
+              <div class="ghdr">Urgent, not important</div>
+              <div class="row"><div class="ck" data-ck></div><div class="rowbody"><div class="rowtitle">Renew the domain</div><div class="rowsub late">Missed · last week</div></div><div class="dot" style="background:var(--p-corv)"></div></div>
+
+              <div class="ghdr">Neither</div>
+              <div class="row"><div class="ck" data-ck></div><div class="rowbody"><div class="rowtitle">Compare Tauri storage adapters</div></div><div class="dot" style="background:var(--p-corv)"></div></div>
+              <div class="row"><div class="ck" data-ck></div><div class="rowbody"><div class="rowtitle">Tidy the bookshelf</div></div><div class="dot" style="background:var(--p-home)"></div></div>
+            </div>
+            <button class="fab" data-sheet="add" aria-label="Add item">+</button>
+            <div class="navbar">
+              <button class="nav" data-go="cal"><i>▦</i>Calendar</button>
+              <button class="nav" data-go="today"><i>◉</i>Today</button>
+              <button class="nav" data-go="tasks" aria-current="true"><i>☰</i>Tasks</button>
+              <button class="nav" data-go="stats"><i>◔</i>Stats</button>
+            </div>
+          </section>
+
+          <!-- ============ WORK MODE ============ -->
+          <section class="view" data-view="work">
+            <div class="wm">
+              <div class="wm-lab">Total</div>
+              <div class="wm-total">01:47:12</div>
+            </div>
+            <div class="wm-card">
+              <span class="pill">WORK</span>
+              <div class="wm-seg">00:23:41</div>
+              <div class="wm-item">Sketch the brick lane algorithm<small>+ Write the sync spec</small></div>
+            </div>
+            <div class="scroller" style="padding-top:16px">
+              <div class="seg"><span class="dot" style="background:var(--d-green);margin:0"></span><div class="nm">Work<small>Thesis draft</small></div><span class="tm">00:42</span></div>
+              <div class="seg"><span class="dot" style="background:var(--d-amber);margin:0"></span><div class="nm">Break</div><span class="tm">00:11</span></div>
+              <div class="seg"><span class="dot" style="background:var(--d-green);margin:0"></span><div class="nm">Work<small>Lane algorithm · Sync spec</small></div><span class="live">live</span><span class="tm">00:24</span></div>
+            </div>
+            <div class="cta" style="display:grid;gap:8px">
+              <button class="btn primary small">Take a Break</button>
+              <button class="btn ghost small">Switch item</button>
+              <button class="btn ghost small" data-go="summary">End Session</button>
+            </div>
+          </section>
+
+          <!-- ============ SUMMARY ============ -->
+          <section class="view" data-view="summary">
+            <div class="center">
+              <h4>Session ended</h4>
+              <p>You worked for 1 h 36 m across 3 segments.</p>
+              <svg class="ring" width="146" height="146" viewBox="0 0 146 146" aria-label="82 percent focus">
+                <circle cx="73" cy="73" r="62" fill="none" stroke="#2A342B" stroke-width="11"></circle>
+                <circle cx="73" cy="73" r="62" fill="none" stroke="#4CC26A" stroke-width="11" stroke-linecap="round"
+                        stroke-dasharray="319.6 389.6" transform="rotate(-90 73 73)"></circle>
+                <text x="73" y="70" text-anchor="middle" fill="#E8EFE9" font-size="30" font-family="ui-monospace,monospace" font-weight="600">82%</text>
+                <text x="73" y="90" text-anchor="middle" fill="#8A9990" font-size="11" font-family="system-ui">focus</text>
+              </svg>
+            </div>
+            <div class="tiles">
+              <div class="tile"><span>WORK</span><b class="g">01:36</b></div>
+              <div class="tile"><span>BREAK</span><b class="a">00:11</b></div>
+            </div>
+            <div class="scroller" style="padding-top:16px">
+              <div class="ghdr">Where the time went</div>
+              <div class="bar-row"><span>Thesis draft</span><div class="bar-track"><div class="bar-fill" style="width:44%;background:var(--p-thesis)"></div></div><span class="v">00:42</span></div>
+              <div class="bar-row"><span>Lane algorithm</span><div class="bar-track"><div class="bar-fill" style="width:56%;background:var(--p-corv)"></div></div><span class="v">00:54</span></div>
+              <div class="bar-row"><span>Sync spec</span><div class="bar-track"><div class="bar-fill" style="width:25%;background:var(--p-corv)"></div></div><span class="v">00:24</span></div>
+              <p class="note">Totals overlap — the last segment carried two items, so both count its full length.</p>
+            </div>
+            <div class="cta"><button class="btn primary" data-go="today">Done</button></div>
+          </section>
+
+          <!-- ============ STATS ============ -->
+          <section class="view" data-view="stats">
+            <div class="appbar">
+              <div><h3>Stats</h3><div class="sub">August 2026</div></div>
+              <div class="gear" title="Settings">⚙</div>
+            </div>
+            <div class="filterbar">
+              <div class="segrow n3">
+                <button data-filter>Week</button>
+                <button class="on" data-filter>Month</button>
+                <button data-filter>Custom</button>
+              </div>
+              <div class="projrow">
+                <button class="pchip on" data-proj>All projects</button>
+                <button class="pchip" data-proj><i style="background:var(--p-corv)"></i>Corvonium</button>
+                <button class="pchip" data-proj><i style="background:var(--p-thesis)"></i>Thesis</button>
+                <button class="pchip" data-proj><i style="background:var(--p-home)"></i>Home</button>
+                <button class="pchip" data-proj><i style="background:var(--p-fit)"></i>Fitness</button>
+              </div>
+            </div>
+            <div class="scroller">
+              <div class="tiles" style="padding:2px 0 0">
+                <div class="tile"><span>WORK</span><b class="g">62:40</b></div>
+                <div class="tile"><span>BREAK</span><b class="a">07:35</b></div>
+                <div class="tile"><span>FOCUS</span><b>89%</b></div>
+                <div class="tile"><span>DAYS WORKED</span><b>19</b></div>
+              </div>
+
+              <div class="ghdr">By project</div>
+              <div class="bar-row"><span>Corvonium</span><div class="bar-track"><div class="bar-fill" style="width:100%;background:var(--p-corv)"></div></div><span class="v">31:10</span></div>
+              <div class="bar-row"><span>Thesis</span><div class="bar-track"><div class="bar-fill" style="width:66%;background:var(--p-thesis)"></div></div><span class="v">20:45</span></div>
+              <div class="bar-row"><span>Home</span><div class="bar-track"><div class="bar-fill" style="width:24%;background:var(--p-home)"></div></div><span class="v">07:30</span></div>
+              <div class="bar-row"><span>Fitness</span><div class="bar-track"><div class="bar-fill" style="width:11%;background:var(--p-fit)"></div></div><span class="v">03:15</span></div>
+
+              <div class="ghdr">Focus over time</div>
+              <svg viewBox="0 0 300 74" width="100%" height="74" preserveAspectRatio="none" aria-label="Focus percentage trend">
+                <polyline points="0,52 43,44 86,49 129,33 172,37 215,22 258,26 300,17" fill="none" stroke="#4CC26A" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"></polyline>
+                <circle cx="300" cy="17" r="4" fill="#4CC26A"></circle>
+              </svg>
+
+              <div class="ghdr">Biggest time sinks</div>
+              <div class="bar-row"><span>Sync server</span><div class="bar-track"><div class="bar-fill" style="width:88%;background:var(--p-corv)"></div></div><span class="v">14:20</span></div>
+              <div class="bar-row"><span>Thesis draft</span><div class="bar-track"><div class="bar-fill" style="width:71%;background:var(--p-thesis)"></div></div><span class="v">11:35</span></div>
+              <div class="bar-row"><span>Calendar grid</span><div class="bar-track"><div class="bar-fill" style="width:52%;background:var(--p-corv)"></div></div><span class="v">08:25</span></div>
+              <p class="note">An item can share a segment with another, so these overlap and will not sum to the total above.</p>
+            </div>
+            <div class="navbar">
+              <button class="nav" data-go="cal"><i>▦</i>Calendar</button>
+              <button class="nav" data-go="today"><i>◉</i>Today</button>
+              <button class="nav" data-go="tasks"><i>☰</i>Tasks</button>
+              <button class="nav" data-go="stats" aria-current="true"><i>◔</i>Stats</button>
+            </div>
+          </section>
+
+          <!-- ============ SHEETS ============ -->
+          <div class="sheet-bg" data-close></div>
+
+          <div class="sheet" id="sheet-add">
+            <div class="grab"></div>
+            <div class="cap-field">
+              <div class="cap-text">Take the garbage out <span class="mark">every 2 days</span> <span class="mark">important</span> <span class="mark p">home</span></div>
+              <button class="mic" aria-label="Dictate">🎤</button>
+            </div>
+            <div class="cap-chips">
+              <button class="cchip"><b>Every 2 days</b><span class="x">✕</span></button>
+              <button class="cchip"><b>Important</b><span class="x">✕</span></button>
+              <button class="cchip proj"><b>Home</b><span class="x">✕</span></button>
+            </div>
+            <p class="cap-hint">Underlined words were used and removed from the title. Tap a chip to put them back.</p>
+            <div class="meta"><span class="k">Title</span><span>Take the garbage out</span></div>
+            <div class="meta"><span class="k">Repeat</span><span>Every 2 days</span></div>
+            <div class="meta"><span class="k">Project</span><span class="dot" style="background:var(--p-home);margin:0"></span><span>Home</span></div>
+            <div class="meta"><span class="k">Due</span><span style="color:var(--d-faint)">No date</span></div>
+            <div class="meta"><span class="k">Important</span><div class="sw"></div></div>
+            <div class="sheet-acts">
+              <button class="btn ghost small" data-close>More options</button>
+              <button class="btn primary small" data-close>Add</button>
+            </div>
+          </div>
+
+          <div class="sheet" id="sheet-item">
+            <div class="grab"></div>
+            <h4>Thesis draft</h4>
+            <p style="margin:0 0 8px;color:var(--d-dim);font-size:12.5px">Chapter 3 — methodology, first pass</p>
+            <div class="meta"><span class="k">Due</span><span>20 August 2026, 17:00</span></div>
+            <div class="meta"><span class="k">Project</span><span class="dot" style="background:var(--p-thesis);margin:0"></span><span>Thesis</span></div>
+            <div class="meta"><span class="k">Repeat</span><span style="color:var(--d-dim)">Does not repeat</span></div>
+            <div class="meta"><span class="k">Important</span><div class="sw"></div></div>
+            <div class="ghdr">Checklist</div>
+            <div class="subt done"><span class="ck on"></span>Pull the interview transcripts</div>
+            <div class="subt"><span class="ck"></span>Outline the coding scheme</div>
+            <div class="subt"><span class="ck"></span>Write the limitations section</div>
+            <div class="sheet-acts">
+              <button class="btn ghost small" data-close>Edit</button>
+              <button class="btn danger small" data-close>Cancel item</button>
+            </div>
+          </div>
+
+          <div class="sheet" id="sheet-day">
+            <div class="grab"></div>
+            <h4>Saturday 15 August</h4>
+            <p style="margin:0 0 6px;color:var(--d-dim);font-size:12.5px">5 items · 4 h 20 m worked</p>
+            <div class="ghdr">In time order</div>
+            <div class="row"><div class="ck" data-ck></div><div class="rowbody"><div class="rowtitle">Standup</div><div class="rowsub">09:00 – 09:15</div></div><div class="dot" style="background:var(--p-corv)"></div></div>
+            <div class="row"><div class="ck" data-ck></div><div class="rowbody"><div class="rowtitle">Send the invoice</div><div class="rowsub soon">Due 17:00</div></div><div class="dot" style="background:var(--p-thesis)"></div></div>
+            <div class="row"><div class="ck" data-ck></div><div class="rowbody"><div class="rowtitle">Coffee with Deniz</div><div class="rowsub">16:30</div></div><div class="dot" style="background:var(--p-home)"></div></div>
+            <div class="row"><div class="ck" data-ck></div><div class="rowbody"><div class="rowtitle">Family visit</div><div class="rowsub">All day · 13 – 18 August</div></div><div class="dot" style="background:var(--p-home)"></div></div>
+            <div class="sheet-acts"><button class="btn primary small" data-close>Add to this day</button></div>
+          </div>
+
+        </div>
+      </div>
+      <p class="device-note">372 × 752 — the real thing, not a diagram</p>
+    </div>
+  </div>
+
+  <section class="notes">
+    <h2>What the drawing settles</h2>
+    <div class="notegrid">
+      <div class="note-item">
+        <p class="tagline">Confirmed</p>
+        <h3>Three bricks, then "+2 more"</h3>
+        <p>At real dimensions a day cell is 92 px. The day number takes 22, each brick 17. Three fit. The ceiling the plan predicted is exactly the ceiling the grid has.</p>
+      </div>
+      <div class="note-item">
+        <p class="tagline">Week segmentation</p>
+        <h3>Family visit, cut in half</h3>
+        <p>13 – 18 August crosses a row boundary, so it draws twice — squared off with a chevron at each cut. Two segments, one item, fixed lane on both rows.</p>
+      </div>
+      <div class="note-item">
+        <p class="tagline">Plan vs Effort</p>
+        <h3>The toggle earns the cell</h3>
+        <p>Because Effort replaces the bricks rather than joining them, intensity gets the full 92 px — a proportional bar and an hour figure, instead of the few spare pixels a combined view would have left.</p>
+      </div>
+      <div class="note-item">
+        <p class="tagline">Derived, not stored</p>
+        <h3>The matrix sorts itself</h3>
+        <p>Nothing on the task screen carries an urgency flag. "Send the invoice" sits in Urgent &amp; Important because it is due at 17:00 today, and it will leave on its own tomorrow.</p>
+      </div>
+      <div class="note-item">
+        <p class="tagline">Capture</p>
+        <h3>The parser shows its work</h3>
+        <p>One sentence in, a filled-in item out. Words the parser used stay underlined where you typed them, and every value it extracted is a chip — so a wrong read is visible, and one tap puts the words back.</p>
+      </div>
+      <div class="note-item">
+        <p class="tagline">Two rows, two axes</p>
+        <h3>Time above, project below</h3>
+        <p>Splitting the filters matches the model: one narrows by <em>when</em>, the other by <em>which project</em>, and they combine. A single scrolling strip hid that they were independent.</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+  (function () {
+    var screen = document.getElementById('screen');
+    var caps = {
+      cal: '<strong>Calendar, Plan mode.</strong> Six rows by seven, always. The Family visit brick is cut at the week boundary and picked up on the next row.',
+      effort: '<strong>Calendar, Effort mode.</strong> Same grid, same month — bricks swapped for how much focused work each day held. Tap the summary to open Stats.',
+      today: '<strong>Today.</strong> Every group capped at three, with See all falling through to Task view. The button is pinned; only the list scrolls.',
+      tasks: '<strong>Task view.</strong> Fixed Eisenhower grouping, Routine on top. The circle completes and nothing else — everything else lives in the sheet behind the row.',
+      work: '<strong>Work Mode.</strong> Counting up, not down. The live segment carries two items at once; both will bill the full 24 minutes.',
+      summary: '<strong>Session summary.</strong> Every figure here is arithmetic over the segment list — nothing was counted while the timer ran.',
+      stats: '<strong>Stats.</strong> A destination of its own in the navbar, and still reachable by drilling down from Effort mode when you want the month you were looking at.'
+    };
+
+    function show(name) {
+      var views = screen.querySelectorAll('.view');
+      for (var i = 0; i < views.length; i++) {
+        views[i].classList.toggle('on', views[i].getAttribute('data-view') === name);
+      }
+      var picks = document.querySelectorAll('.pick');
+      for (var j = 0; j < picks.length; j++) {
+        picks[j].setAttribute('aria-current', picks[j].getAttribute('data-go') === name ? 'true' : 'false');
+      }
+      if (caps[name]) document.getElementById('cap').innerHTML = caps[name];
+      screen.classList.remove('open');
+    }
+
+    document.addEventListener('click', function (e) {
+      var go = e.target.closest('[data-go]');
+      if (go) { show(go.getAttribute('data-go')); return; }
+
+      var mode = e.target.closest('[data-mode]');
+      if (mode) { show(mode.getAttribute('data-mode') === 'plan' ? 'cal' : 'effort'); return; }
+
+      var open = e.target.closest('[data-sheet]');
+      if (open) {
+        var id = 'sheet-' + open.getAttribute('data-sheet');
+        var sheets = screen.querySelectorAll('.sheet');
+        for (var k = 0; k < sheets.length; k++) sheets[k].style.display = sheets[k].id === id ? '' : 'none';
+        screen.classList.add('open');
+        return;
+      }
+
+      if (e.target.closest('[data-close]') || e.target.classList.contains('sheet-bg')) {
+        screen.classList.remove('open');
+        return;
+      }
+
+      var pickOne = e.target.closest('[data-filter], [data-proj]');
+      if (pickOne) {
+        var sibs = pickOne.parentNode.children;
+        for (var s = 0; s < sibs.length; s++) sibs[s].classList.remove('on');
+        pickOne.classList.add('on');
+        return;
+      }
+
+      var ck = e.target.closest('[data-ck]');
+      if (ck) { ck.classList.toggle('on'); }
+    });
+
+    // Effort grid — hours per day, August 2026, Monday-first, 6 rows of 7.
+    // null = outside the month or still in the future; 0 = a day with no work.
+    var hours = [
+      null, null, null, null, null, 1.5, 0,
+      3.5, 5, 4.5, 6, 5.5, 2, 0,
+      4, 6.5, 5, 3, 4.5, 4.3, null,
+      null, null, null, null, null, null, null,
+      null, null, null, null, null, null, null,
+      null, null, null, null, null, null, null
+    ];
+    var nums = [
+      27, 28, 29, 30, 31, 1, 2,
+      3, 4, 5, 6, 7, 8, 9,
+      10, 11, 12, 13, 14, 15, 16,
+      17, 18, 19, 20, 21, 22, 23,
+      24, 25, 26, 27, 28, 29, 30,
+      31, 1, 2, 3, 4, 5, 6
+    ];
+    var TODAY_INDEX = 19; // Saturday 15 August
+    var outside = function (i) { return i < 5 || i > 35; };
+
+    var g = document.getElementById('effgrid');
+    var html = '';
+    for (var w = 0; w < 6; w++) {
+      html += '<div class="wk"><div class="wk-days">';
+      for (var d = 0; d < 7; d++) {
+        var i = w * 7 + d;
+        var h = hours[i];
+        var isToday = (i === TODAY_INDEX);
+        html += '<div class="cell' + (outside(i) ? ' out' : '') + (isToday ? ' today sel' : '') + '">' +
+                '<span class="dn">' + nums[i] + '</span>';
+        if (!outside(i)) {
+          if (h) {
+            var px = Math.max(4, Math.round(Math.min(h / 8, 1) * 44));
+            html += '<div class="eff">' +
+                    '<span class="eff-h">' + h.toFixed(1).replace('.0', '') + 'h</span>' +
+                    '<div class="eff-bar" style="height:' + px + 'px;opacity:' +
+                    (0.45 + Math.min(h / 8, 1) * 0.55).toFixed(2) + '"></div>' +
+                    '</div>';
+          } else if (i <= TODAY_INDEX) {
+            html += '<div class="eff"><div class="eff-track"></div></div>';
+          }
+        }
+        html += '</div>';
+      }
+      html += '</div></div>';
+    }
+    g.innerHTML = html;
+  })();
+</script>
