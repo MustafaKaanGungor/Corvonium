@@ -34,7 +34,6 @@ export const itemSchema: RxJsonSchema<Item> = {
 
     // organisation
     projectId: { type: ['string', 'null'] },
-    tags: { type: 'array', items: { type: 'string' } },
     location: { type: ['string', 'null'] },
     important: { type: 'boolean' },
     sortOrder: { type: 'string', maxLength: 100 },

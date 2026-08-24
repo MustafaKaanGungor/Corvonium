@@ -639,7 +639,6 @@ All collections share sync-friendly fields. **Rules that everything depends on:*
 
   // --- organisation ---
   projectId: string | null,
-  tags: string[],
   location: string | null,
   important: boolean,            // the Eisenhower axis that is a judgement call; defaults false
   sortOrder: string,             // fractional index — conflict-tolerant manual ordering
@@ -671,8 +670,7 @@ A flat checklist belonging to one item. Deliberately minimal — no dates, no ne
   done: boolean,
   sortOrder: string,            // fractional index
   createdAt: number,
-  updatedAt: number,
-  deleted: boolean
+  updatedAt: number
 }
 ```
 
@@ -690,8 +688,7 @@ A project is a **label and a filter, nothing more** — no detail screen, no nes
   archived: boolean,
   sortOrder: string,
   createdAt: number,
-  updatedAt: number,
-  deleted: boolean
+  updatedAt: number
 }
 ```
 
@@ -713,8 +710,7 @@ One document per session, with its segments embedded.
     }
   ],
   createdAt: number,
-  updatedAt: number,
-  deleted: boolean
+  updatedAt: number
 }
 ```
 
@@ -733,8 +729,7 @@ One document per session, with its segments embedded.
   urgentWithinDays: number,            // default 2 — deadline inside this window is urgent (§3.4)
   breakNudgeAfterMin: number | null,   // optional "you've worked a while" nudge; null = never
   createdAt: number,
-  updatedAt: number,
-  deleted: false
+  updatedAt: number
 }
 ```
 
@@ -782,34 +777,39 @@ Carried over from review, still to resolve:
 4. **SSE + bearer auth** don't compose — `EventSource` can't set headers.
 5. **Tombstone purge vs. stale clients** — a client offline longer than the purge window resurrects deleted docs.
 6. **Recurrence editing** — "this and all following", and deleting single occurrences.
-7. **Schema migrations** — RxDB `schemaVersion` + `migrationStrategies`, and SQLite migrations, must exist before Phase 1 ships real data.
+7. ~~**Schema migrations**~~ — **done in Phase 0.** RxDB collections are declared at `schemaVersion: 0` with `migrationStrategies` wired. The SQLite migration runner is still owed, in Phase 2.
 
 ---
 
 ## 8. Frontend Architecture
 
 ```
-src/
+apps/web/src/
 ├── db/
 │   ├── schema/            # RxDB collection schemas (items, subtasks, projects, sessions, settings)
-│   ├── database.ts        # createDatabase(), singleton access
+│   ├── database.ts        # getDatabase() — lazy singleton, dev-only validator + dev-mode
+│   ├── hooks.ts           # reactive query hooks; the impure edge (clock, uuid) lives here
 │   └── replication.ts     # per-collection replication setup, server URL from device config
 ├── features/
-│   ├── calendar/          # day/week/month layout, drag-to-schedule, rrule expansion
-│   ├── tasks/             # list view, grouping, triage, quick capture
-│   ├── today/             # today + due + overdue query, Start Working entry point
-│   ├── work/              # work mode surface, timer state machine, session recording
-│   └── projects/          # project management
-├── components/            # shared UI (buttons, dialogs, layout)
-│   └── capture/           # the text parser (§2.7) + dictation, pure and unit-tested
-├── lib/                   # date helpers, recurrence, uuid, ordering, notification helpers
+│   ├── calendar/          # month grid, lane assignment, Plan/Effort modes, rrule expansion
+│   ├── tasks/             # the Eisenhower matrix, filters, triage
+│   ├── today/             # capped groups, Start the Day
+│   ├── work/              # work mode surface, session state machine, segment recording
+│   ├── stats/             # ranges, per-project and per-item rollups
+│   ├── capture/           # the text parser (§2.7) + dictation — pure, unit-tested
+│   └── projects/          # project management, inside Settings
+├── components/            # shared UI (buttons, sheets, layout)
+├── lib/                   # formatting, useNow, ordering, notification helpers
 ├── App.tsx
 └── main.tsx
 ```
 
+`packages/shared/` holds what the server needs too: the document types, the RxDB schemas, the sync wire types, and the derived predicates (§10).
+
 Guidelines:
 
 - **The database is the state manager.** No Redux/Zustand for domain data — components subscribe to RxDB queries directly (thin hooks like `useItems(filter)`). Keep component-local state (open dialogs, form drafts) in React state.
+- **Exactly one place reads the clock.** A `useNow()` hook holds the current time as state and ticks once a minute; every component that needs it receives it, and every predicate takes `now` as an argument. Calling `Date.now()` inside a render is impure — React only re-renders for its own reasons, so the value goes stale and **§2.2's promise that missed "updates itself as the clock moves" quietly stops being true at midnight**. It also keeps the derived state testable, since a function given the time can be tested with a table.
 - **One item editor**, shared by all three screens. Since tasks and events are one type, there is one edit surface; the screens differ in how they _list_ items, not how they _edit_ them.
 - **Work mode as a state machine:** `idle → work ⇄ break → ended`, driven entirely by the user rather than by elapsed time. Persist the in-progress session locally so a reload or app restart resumes it exactly — the segment list plus wall-clock arithmetic is all the state there is.
 - **Notifications:** use the Notification API + service worker. Works well on desktop and Android; iOS PWA background notifications are unreliable — the eventual argument for Capacitor. _(Scheduled due-date reminders need a real decision — browsers can't reliably schedule future local notifications.)_
@@ -920,7 +920,7 @@ Phases 1–3 can ship without scheduled reminders. The decision has to land befo
 
 ## 11. Build Phases
 
-**Phase 0 — Foundations**
+**Phase 0 — Foundations** ✅ _complete_
 pnpm workspaces, `packages/shared`, TypeScript config, lint and format, a test runner, CI. RxDB collections declared at `schemaVersion: 0` with `migrationStrategies` wired from the first commit, and the SQLite migration runner in place before there is anything to migrate. Nothing user-facing ships here; everything after it costs less because of it.
 
 **Phase 1 — Local-only PWA (usable end product on its own)**
@@ -943,7 +943,7 @@ Tauri desktop app and/or Capacitor mobile app if PWA limits (notifications, stor
 ## 12. Pitfalls Checklist
 
 - [ ] Client-generated UUIDs everywhere — no server-assigned IDs
-- [ ] Tombstones (`deleted: true`) — no hard deletes
+- [ ] Tombstones via RxDB's `_deleted` (`doc.remove()`) — no hard deletes, and never a `deleted` field of your own (reserved name)
 - [ ] `updatedAt` set on **every** mutation, including tombstoning; `createdAt` never changes
 - [ ] Store timed values in UTC (epoch millis); store all-day values as `YYYY-MM-DD` strings
 - [ ] Keep `tzid` on anything recurring — DST and travel break naive UTC expansion
@@ -965,7 +965,7 @@ Tauri desktop app and/or Capacitor mobile app if PWA limits (notifications, stor
 - [ ] Whisper's model is fetched lazily on first use, never bundled or downloaded at install
 - [ ] Server URL + auth token in **local-only** device config, never in the synced settings doc
 - [ ] Checkpoint on a server-assigned sequence, not on client `updatedAt`
-- [ ] Declare RxDB `schemaVersion` + migration strategies before storing real data
+- [x] Declare RxDB `schemaVersion` + migration strategies before storing real data — _done, Phase 0_
 - [ ] Month grid sized with `dvh`, not `vh` — mobile browser chrome collapses and `100vh` overflows
 - [ ] Request persistent storage in the PWA
 - [ ] Back up the server's SQLite file regularly — and test a restore once

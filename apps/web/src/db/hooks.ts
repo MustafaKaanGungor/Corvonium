@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { createItem, type Item, type NewItem } from '@corvonium/shared';
+import type { Item } from '@corvonium/shared';
 import { getDatabase } from './database';
 
 export function useItems(): Item[] | null {
@@ -28,9 +28,4 @@ export function useItems(): Item[] | null {
   }, []);
 
   return items;
-}
-
-export async function addItem(input: NewItem): Promise<void> {
-  const db = await getDatabase();
-  await db.items.insert(createItem(input, Date.now(), crypto.randomUUID()));
 }

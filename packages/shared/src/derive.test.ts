@@ -22,7 +22,6 @@ function makeItem(over: Partial<Item> = {}): Item {
     completedAt: null,
     cancelledAt: null,
     projectId: null,
-    tags: [],
     location: null,
     important: false,
     sortOrder: 'a0',

@@ -1,10 +1,16 @@
 import { localDate } from '@corvonium/shared';
-import { addItem, useItems } from './db/hooks';
+import { useItems } from './db/hooks';
 import { useNow } from './lib/useNow';
+import { addItem } from './db/items';
+import { useState } from 'react';
+import { ItemForm } from './features/items/ItemForm';
+import { TaskView } from './features/tasks/TaskView';
+
 
 export default function App() {
   const items = useItems();
   const now = useNow();
+  const [adding, setAdding] = useState(false);
 
   return (
     <div className="min-h-dvh bg-[#0A0E0C] text-[#E8EFE9] p-6">
@@ -15,22 +21,24 @@ export default function App() {
         <p className="text-sm text-[#8A9990]">{localDate(now)}</p>
       </header>
 
-      <button
-        onClick={() => addItem({ title: `Item ${new Date().toLocaleTimeString()}` })}
-        className="rounded-lg bg-[#4CC26A] px-4 py-2 font-semibold text-[#06210F]"
-      >
-        Add item
-      </button>
+      {adding ? (
+        <ItemForm
+          onSubmit={(draft) => {
+            addItem(draft);
+            setAdding(false);
+          }}
+          onCancel={() => setAdding(false)}
+        />
+      ) : (
+        <button
+          onClick={() => setAdding(true)}
+          className="rounded-lg bg-[#4CC26A] px-4 py-2 font-semibold text-[#06210F]"
+        >
+          Add item
+        </button>
+      )}
 
-      <ul className="mt-6 space-y-2">
-        {items == null && <li className="text-[#5F6E66]">Loading…</li>}
-        {items?.length === 0 && <li className="text-[#5F6E66]">No items yet.</li>}
-        {items?.map((item) => (
-          <li key={item.id} className="rounded-lg bg-[#141A16] px-4 py-3">
-            {item.title}
-          </li>
-        ))}
-      </ul>
+      {items && <TaskView items={items} now={now} />}
     </div>
   );
 }
