@@ -1,8 +1,10 @@
 import { localDate } from '@corvonium/shared';
 import { addItem, useItems } from './db/hooks';
+import { useNow } from './lib/useNow';
 
 export default function App() {
   const items = useItems();
+  const now = useNow();
 
   return (
     <div className="min-h-dvh bg-[#0A0E0C] text-[#E8EFE9] p-6">
@@ -10,7 +12,7 @@ export default function App() {
         <h1 className="text-2xl font-bold tracking-tight">
           Corvo<span className="text-[#4CC26A]">nium</span>
         </h1>
-        <p className="text-sm text-[#8A9990]">{localDate(Date.now())}</p>
+        <p className="text-sm text-[#8A9990]">{localDate(now)}</p>
       </header>
 
       <button

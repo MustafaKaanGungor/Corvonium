@@ -8,6 +8,9 @@ importers:
 
   .:
     devDependencies:
+      oxlint:
+        specifier: ^1.79.0
+        version: 1.79.0
       prettier:
         specifier: ^3.9.6
         version: 3.9.6
