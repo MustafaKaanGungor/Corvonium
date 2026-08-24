@@ -10,7 +10,7 @@ function makeItem(over: Partial<Item> = {}): Item {
     rrule: null, seriesId: null, originalStart: null,
     status: 'open', completedAt: null, cancelledAt: null,
     projectId: null, tags: [], location: null, important: false, sortOrder: 'a0',
-    createdAt: 0, updatedAt: 0, deleted: false,
+    createdAt: 0, updatedAt: 0,
     ...over,
   };
 }

@@ -54,7 +54,7 @@ Every item, event included, can be ticked off. For a task that means finished; f
 status: 'open' | 'done' | 'cancelled'
 ```
 
-**Cancelled is a write-off, not a delete.** The item stays in the database and in history — you decided not to do it. This is distinct from `deleted`, which means "this record was a mistake, forget it existed".
+**Cancelled is a write-off, not a delete.** The item stays in the database and in history — you decided not to do it. This is distinct from deletion (`_deleted`), which means "this record was a mistake, forget it existed".
 
 **Missed is derived, never stored.** An item is missed when `status === 'open'` and its time has passed (`due < now`, or `end < now` for a block). Deriving it means it updates itself as the clock moves — no nightly job, no "roll over" batch process that can fail or double-run offline. Missed items surface at the **top** of both Today and Task view, where they can be completed late or cancelled.
 
@@ -606,7 +606,7 @@ All collections share sync-friendly fields. **Rules that everything depends on:*
 - `id`: **UUID v4, generated on the client** (never server auto-increment — records are created offline).
 - `createdAt`: epoch millis, set once. Never changes.
 - `updatedAt`: epoch millis, set on every mutation. Used for last-write-wins conflict resolution.
-- `deleted`: boolean tombstone. **Never hard-delete**; set `deleted: true` and let it sync. (Optionally purge tombstones server-side after all clients have seen them, e.g. 30+ days.)
+- **Never hard-delete.** Deleting sets a tombstone that syncs like any other change. Use **RxDB's built-in `_deleted`** via `doc.remove()` rather than a field of our own: queries exclude tombstones automatically, and the replication protocol already propagates them. (`deleted` is a reserved field name in RxDB for exactly this reason.) Optionally purge tombstones server-side once every client has seen them, e.g. after 30+ days.
 
 ### `items` — tasks *and* events
 
@@ -644,8 +644,8 @@ All collections share sync-friendly fields. **Rules that everything depends on:*
   sortOrder: string,             // fractional index — conflict-tolerant manual ordering
 
   createdAt: number,
-  updatedAt: number,
-  deleted: boolean
+  updatedAt: number
+  // no `deleted` field — RxDB's built-in `_deleted` tombstone handles it
 }
 ```
 

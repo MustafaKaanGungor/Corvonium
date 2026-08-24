@@ -13,8 +13,11 @@
   "dependencies": {
     "@corvonium/shared": "workspace:*",
     "@tailwindcss/vite": "^4.3.3",
+    "dexie": "^4.4.5",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
+    "rxdb": "^17.5.0",
+    "rxjs": "^7.8.2",
     "tailwindcss": "^4.3.3"
   },
   "devDependencies": {

@@ -35,5 +35,4 @@ export interface Item {
 
     createdAt: number;
     updatedAt: number;
-    deleted: boolean;
 }
