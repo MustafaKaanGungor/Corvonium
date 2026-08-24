@@ -1,16 +1,33 @@
-import {describe, expect, it} from 'vitest';
-import {isRoutine, isMissed, isUrgent} from './derive';
-import type {Item} from './types';
+import { describe, expect, it } from 'vitest';
+import { isRoutine, isMissed, isUrgent, localDate } from './derive';
+import type { Item } from './types';
 
 function makeItem(over: Partial<Item> = {}): Item {
-    return {
-    id: 'x', title: 'Test', notes: '', kind: 'task',
-    allDay: false, start: null, end: null, startDate: null, endDate: null,
-    due: null, tzid: null,
-    rrule: null, seriesId: null, originalStart: null,
-    status: 'open', completedAt: null, cancelledAt: null,
-    projectId: null, tags: [], location: null, important: false, sortOrder: 'a0',
-    createdAt: 0, updatedAt: 0,
+  return {
+    id: 'x',
+    title: 'Test',
+    notes: '',
+    kind: 'task',
+    allDay: false,
+    start: null,
+    end: null,
+    startDate: null,
+    endDate: null,
+    due: null,
+    tzid: null,
+    rrule: null,
+    seriesId: null,
+    originalStart: null,
+    status: 'open',
+    completedAt: null,
+    cancelledAt: null,
+    projectId: null,
+    tags: [],
+    location: null,
+    important: false,
+    sortOrder: 'a0',
+    createdAt: 0,
+    updatedAt: 0,
     ...over,
   };
 }
@@ -31,7 +48,7 @@ describe('isRoutine', () => {
 });
 
 describe('isMissed', () => {
-    it('catches an all-day item whose last day has passed', () => {
+  it('catches an all-day item whose last day has passed', () => {
     const item = makeItem({ allDay: true, startDate: '2026-08-13', endDate: '2026-08-14' });
     expect(isMissed(item, NOW)).toBe(true);
   });
@@ -41,7 +58,7 @@ describe('isMissed', () => {
     expect(isMissed(item, NOW)).toBe(false);
   });
 
-    it('handles a single-day all-day item with no end date', () => {
+  it('handles a single-day all-day item with no end date', () => {
     expect(isMissed(makeItem({ allDay: true, startDate: '2026-08-14' }), NOW)).toBe(true);
     expect(isMissed(makeItem({ allDay: true, startDate: '2026-08-15' }), NOW)).toBe(false);
   });
@@ -81,5 +98,12 @@ describe('isUrgent', () => {
 
   it('is false without a due date — urgency is a fact about deadlines', () => {
     expect(isUrgent(makeItem({ important: true }), NOW, 2)).toBe(false);
+  });
+});
+
+describe('localDate', () => {
+  it('uses the local calendar day, not the UTC one', () => {
+    // 22:30 UTC on the 15th is already 01:30 on the 16th in Istanbul (UTC+3)
+    expect(localDate(Date.UTC(2026, 7, 15, 22, 30))).toBe('2026-08-16');
   });
 });

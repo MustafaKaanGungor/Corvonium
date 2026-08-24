@@ -5,11 +5,11 @@ import { getDatabase } from './database';
 export function useItems(): Item[] | null {
   const [items, setItems] = useState<Item[] | null>(null);
 
-    useEffect(() => {
+  useEffect(() => {
     let cancelled = false;
     let sub: { unsubscribe(): void } | undefined;
 
-        getDatabase()
+    getDatabase()
       .then((db) => {
         if (cancelled) return;
         sub = db.items.find().$.subscribe({

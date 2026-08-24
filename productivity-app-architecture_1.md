@@ -5,6 +5,7 @@ Corvonium is a self-hosted, offline-first planner for scheduling work and then f
 > **Status:** living document. Sections marked **TBD** are still being decided.
 >
 > **Prototypes** — both clickable, source in `design/`:
+>
 > - Mobile, at real phone dimensions — `design/corvonium-screens.html` ·
 >   <https://claude.ai/code/artifact/1d21c91d-2539-4a92-b9fa-839597a48925>
 > - Desktop shell — `design/corvonium-desktop.html` ·
@@ -15,10 +16,10 @@ Corvonium is a self-hosted, offline-first planner for scheduling work and then f
 ## 1. Core Principles
 
 1. **Offline-first.** The local database on each device is the source of truth for that device. Every read/write is local and instant. The network is only used for background sync.
-2. **Hub-and-spoke sync.** All clients sync with one server (the hub). Clients never talk to each other directly. The hub is a *role*, not specific hardware — it can run on your desktop today and a home server tomorrow.
+2. **Hub-and-spoke sync.** All clients sync with one server (the hub). Clients never talk to each other directly. The hub is a _role_, not specific hardware — it can run on your desktop today and a home server tomorrow.
 3. **Replicas are interchangeable.** Every device holds a full copy of the data. Devices can be added or removed freely; the server can be rebuilt from any client.
 4. **One language.** TypeScript across frontend, sync server, and tooling.
-5. **Tasks and events are the same thing.** There is one schedulable entity. "Calendar" and "Tasks" are two *views* of the same data, not two data types. This is the central product decision — everything downstream follows from it.
+5. **Tasks and events are the same thing.** There is one schedulable entity. "Calendar" and "Tasks" are two _views_ of the same data, not two data types. This is the central product decision — everything downstream follows from it.
 
 ---
 
@@ -35,18 +36,18 @@ Both of those are properties, not separate types. So Corvonium has a single `ite
 
 **Scheduling states** (all derived from the fields, not stored as a mode):
 
-| State | Fields set | Calendar view | Task view |
-|---|---|---|---|
-| **Unscheduled** | none | **never shown** — there is no date to place it at | shown, no date |
-| **Deadline only** | `due` | marker at that time on that day | shown, sorted by due |
-| **Timed block** | `start` + `end` | box spanning the range | shown, sorted by start |
-| **All-day** | `startDate` (+ `endDate`) | all-day strip at top of day | shown under that date |
+| State             | Fields set                | Calendar view                                     | Task view              |
+| ----------------- | ------------------------- | ------------------------------------------------- | ---------------------- |
+| **Unscheduled**   | none                      | **never shown** — there is no date to place it at | shown, no date         |
+| **Deadline only** | `due`                     | marker at that time on that day                   | shown, sorted by due   |
+| **Timed block**   | `start` + `end`           | box spanning the range                            | shown, sorted by start |
+| **All-day**       | `startDate` (+ `endDate`) | all-day strip at top of day                       | shown under that date  |
 
 An item can have **both a block and a deadline** — "work on it Tuesday 14:00–16:00, due Friday". The calendar draws the block; the task view can sort by either.
 
 `kind: 'task' | 'event'` still exists, but only to drive **defaults and filtering** ("hide events", "new task" starts unscheduled, "new event" starts as a block). It is not a hard boundary — an item can move between the two freely. Everything else — completion, subtasks, recurrence, projects — applies equally to both.
 
-### 2.2 Status: open, done, cancelled — and *missed*
+### 2.2 Status: open, done, cancelled — and _missed_
 
 Every item, event included, can be ticked off. For a task that means finished; for an event it means **attended**. Same checkbox, same field.
 
@@ -68,24 +69,24 @@ Stored as **their own documents** (`subtasks` collection with an `itemId`), not 
 
 Tasks and events both recur. The item editor offers presets that generate an RRULE behind the scenes:
 
-| Preset | RRULE |
-|---|---|
-| Every day | `FREQ=DAILY` |
-| Every N days | `FREQ=DAILY;INTERVAL=N` |
+| Preset                     | RRULE                     |
+| -------------------------- | ------------------------- |
+| Every day                  | `FREQ=DAILY`              |
+| Every N days               | `FREQ=DAILY;INTERVAL=N`   |
 | Every week (pick weekdays) | `FREQ=WEEKLY;BYDAY=MO,WE` |
-| Every N weeks | `FREQ=WEEKLY;INTERVAL=N` |
-| Every month | `FREQ=MONTHLY` |
-| Custom | raw RRULE |
+| Every N weeks              | `FREQ=WEEKLY;INTERVAL=N`  |
+| Every month                | `FREQ=MONTHLY`            |
+| Custom                     | raw RRULE                 |
 
 Occurrences are expanded at render time, never stored as rows. **Completing one occurrence writes a small override item** carrying `seriesId` + `originalStart` + its status. So the series stays one document and only the occurrences you actually touched cost a row.
 
 **Cancelling a recurring item always asks which occurrences you mean:**
 
-| Choice | What it does |
-|---|---|
-| **This one** | override item with `status: cancelled` |
+| Choice                  | What it does                                                                                   |
+| ----------------------- | ---------------------------------------------------------------------------------------------- |
+| **This one**            | override item with `status: cancelled`                                                         |
 | **This and all future** | `UNTIL` set on the series' RRULE, just before this occurrence — history before it is untouched |
-| **All of them** | the series document itself goes `status: cancelled` |
+| **All of them**         | the series document itself goes `status: cancelled`                                            |
 
 The prompt appears every time, with no "don't ask again" — the three outcomes are far enough apart that guessing wrong is worse than one extra tap. **Editing** a recurring item needs the identical three-way choice, so it's one shared component, not two.
 
@@ -133,7 +134,7 @@ Session
 
 ### 2.7 Quick capture — one line in, a filled-in item out
 
-Adding something should cost one sentence. You type or dictate **"Take the garbage out every 2 days important home"** and the app keeps *Take the garbage out* as the title, sets a two-day recurrence, marks it important, files it under Home, and drops the words it used.
+Adding something should cost one sentence. You type or dictate **"Take the garbage out every 2 days important home"** and the app keeps _Take the garbage out_ as the title, sets a two-day recurrence, marks it important, files it under Home, and drops the words it used.
 
 Two separate pieces, with very different risk:
 
@@ -142,16 +143,16 @@ Two separate pieces, with very different risk:
 
 #### What it recognises
 
-| Kind | Examples | Produces |
-|---|---|---|
-| Recurrence | every day · daily · every 2 days · every Monday · every weekday · weekly | `rrule` |
-| Importance | important · `!` | `important: true` |
-| Project | any existing project name · `#home` | `projectId` |
-| Date | today · tomorrow · next Friday · on 20 August · in 3 days | `due` / `startDate` |
-| Time | at 17:00 · at 5pm · 14:30 | time on the date |
-| Block | 2–4pm · from 2 to 4 | `start` + `end` |
+| Kind       | Examples                                                                 | Produces            |
+| ---------- | ------------------------------------------------------------------------ | ------------------- |
+| Recurrence | every day · daily · every 2 days · every Monday · every weekday · weekly | `rrule`             |
+| Importance | important · `!`                                                          | `important: true`   |
+| Project    | any existing project name · `#home`                                      | `projectId`         |
+| Date       | today · tomorrow · next Friday · on 20 August · in 3 days                | `due` / `startDate` |
+| Time       | at 17:00 · at 5pm · 14:30                                                | time on the date    |
+| Block      | 2–4pm · from 2 to 4                                                      | `start` + `end`     |
 
-Recurrence maps straight onto RFC 5545 — *every 2 days* is `FREQ=DAILY;INTERVAL=2` — so nothing new enters the data model. **The parser adds no fields at all**: it's a pure function from text to an item you could have filled in by hand.
+Recurrence maps straight onto RFC 5545 — _every 2 days_ is `FREQ=DAILY;INTERVAL=2` — so nothing new enters the data model. **The parser adds no fields at all**: it's a pure function from text to an item you could have filled in by hand.
 
 #### It must be a rule-based parser, not a model
 
@@ -161,7 +162,7 @@ The whole thing is one pure function, `parse(text, projects, now) → { title, f
 
 #### Matching anywhere, made safe by visibility
 
-Modifiers are recognised **anywhere in the sentence**, not only at the end. That inevitably means some wrong reads — *"Call Mum about the important meeting"* will claim the word *important*, and *"Buy home insurance"* will file itself under Home — so the protection is not a restriction on where matches may occur, it's that **every match is visible and one tap undoes it**:
+Modifiers are recognised **anywhere in the sentence**, not only at the end. That inevitably means some wrong reads — _"Call Mum about the important meeting"_ will claim the word _important_, and _"Buy home insurance"_ will file itself under Home — so the protection is not a restriction on where matches may occur, it's that **every match is visible and one tap undoes it**:
 
 - the words the parser consumed stay **marked in place** in the text you typed
 - each extracted value becomes a **chip you can tap off**, returning its words to the title
@@ -171,8 +172,8 @@ A parser that edits your words invisibly is worse than no parser. One that shows
 
 Three rules still apply, none of them positional:
 
-1. **Whole words only** — never substrings, so *homework* never matches the Home project.
-2. **Longest match wins** — *every 2 days* beats *every*.
+1. **Whole words only** — never substrings, so _homework_ never matches the Home project.
+2. **Longest match wins** — _every 2 days_ beats _every_.
 3. **Never strip the whole title** — if removing matches would leave nothing, keep the text and drop the match.
 
 #### Dictation runs on the device
@@ -200,25 +201,25 @@ capture/
 └── parse.ts             # runs every enabled grammar, merges the matches
 ```
 
-**All enabled grammars run on every input** and their matches are merged, rather than a "capture language" setting deciding one. English and Turkish keywords barely collide, so this costs nothing and it means *"Take the garbage out her 2 günde bir"* parses correctly — which is how bilingual people actually type.
+**All enabled grammars run on every input** and their matches are merged, rather than a "capture language" setting deciding one. English and Turkish keywords barely collide, so this costs nothing and it means _"Take the garbage out her 2 günde bir"_ parses correctly — which is how bilingual people actually type.
 
-> **`chrono-node` has no Turkish locale.** It ships English, French, Japanese, Dutch, Russian, Portuguese, Chinese and partial German/Spanish — Turkish isn't among them. So Turkish dates and times are hand-written work (*yarın*, *önümüzdeki Cuma*, *her 2 günde bir*, *saat 17:00'de*), not a library flag. That is the single largest piece of effort in this feature and it's worth knowing before it's scheduled.
+> **`chrono-node` has no Turkish locale.** It ships English, French, Japanese, Dutch, Russian, Portuguese, Chinese and partial German/Spanish — Turkish isn't among them. So Turkish dates and times are hand-written work (_yarın_, _önümüzdeki Cuma_, _her 2 günde bir_, _saat 17:00'de_), not a library flag. That is the single largest piece of effort in this feature and it's worth knowing before it's scheduled.
 
-> **Turkish lowercasing is a real trap.** `"I".toLowerCase()` is `"i"`, but the Turkish fold of `I` is `ı` — so a locale-aware `toLocaleLowerCase('tr')` and a plain `toLowerCase()` disagree on exactly the letters that appear in *İş*, *İkinci*, *Ilık*. Normalise both the input and the keyword tables through the *same* fold, or matching fails on words that look identical on screen.
+> **Turkish lowercasing is a real trap.** `"I".toLowerCase()` is `"i"`, but the Turkish fold of `I` is `ı` — so a locale-aware `toLocaleLowerCase('tr')` and a plain `toLowerCase()` disagree on exactly the letters that appear in _İş_, _İkinci_, _Ilık_. Normalise both the input and the keyword tables through the _same_ fold, or matching fails on words that look identical on screen.
 
 ### 2.8 Settled
 
 The product design is closed. Decisions that took more than one pass, recorded so they aren't reopened by accident:
 
-| Question | Decision |
-|---|---|
-| Urgency threshold | one global `urgentWithinDays`, default **2 days** |
-| Project filter scope | **per screen** — Calendar, Tasks and Stats each keep their own |
-| Projects | a label and a filter. **No detail screen, no nesting**, managed in Settings |
-| Order inside a matrix group | **manual**, via the fractional `sortOrder` |
-| Settings | a **gear in the Today header** — not a navbar slot |
-| Stats | a **fourth navbar destination**, still linked from Effort mode |
-| Routine opt-out | **no** — every recurring item goes to Routine, no exceptions |
+| Question                    | Decision                                                                    |
+| --------------------------- | --------------------------------------------------------------------------- |
+| Urgency threshold           | one global `urgentWithinDays`, default **2 days**                           |
+| Project filter scope        | **per screen** — Calendar, Tasks and Stats each keep their own              |
+| Projects                    | a label and a filter. **No detail screen, no nesting**, managed in Settings |
+| Order inside a matrix group | **manual**, via the fractional `sortOrder`                                  |
+| Settings                    | a **gear in the Today header** — not a navbar slot                          |
+| Stats                       | a **fourth navbar destination**, still linked from Effort mode              |
+| Routine opt-out             | **no** — every recurring item goes to Routine, no exceptions                |
 
 What remains is interface work still to draw (§3.8) and the engineering questions in §7.
 
@@ -248,15 +249,15 @@ Today stays the default landing screen. Stats is a destination in its own right 
 
 **Settings lives behind a gear in the Today header** — the navbar stays at three. It holds:
 
-| Group | Contents |
-|---|---|
+| Group    | Contents                                                                |
+| -------- | ----------------------------------------------------------------------- |
 | Projects | create, rename, recolour, archive — the only place projects are managed |
-| Planning | week start, `urgentWithinDays`, break nudge |
-| Capture | active languages, voice on/off and Whisper model download |
-| Sync | server URL, auth token, sync state |
-| Data | export |
+| Planning | week start, `urgentWithinDays`, break nudge                             |
+| Capture  | active languages, voice on/off and Whisper model download               |
+| Sync     | server URL, auth token, sync state                                      |
+| Data     | export                                                                  |
 
-**View state resets on launch.** Calendar mode (§3.2) and each screen's filters are in-memory only: preserved while you move between tabs, back to defaults on a cold start. Nothing that changes what you *see* is persisted, so the app can never open in a state you forgot you left it in.
+**View state resets on launch.** Calendar mode (§3.2) and each screen's filters are in-memory only: preserved while you move between tabs, back to defaults on a cold start. Nothing that changes what you _see_ is persisted, so the app can never open in a state you forgot you left it in.
 
 **Filters are per screen, not global.** Calendar, Task view and Stats each keep their own project filter. Filtering the calendar to one project doesn't quietly filter your task list too — a single global filter you forgot was on is the kind of state that makes you think items have vanished.
 
@@ -278,20 +279,20 @@ Items render as **bricks** — horizontal bars inside the day cells. An item spa
 
 **Two modes: Plan and Effort.** A toggle in the header switches what fills the cells. Same grid, same month, two questions:
 
-| Mode | Cells show | Answers |
-|---|---|---|
-| **Plan** *(default)* | bricks — scheduled items | what am I meant to be doing |
-| **Effort** | intensity — focused work that day | what did I actually do |
+| Mode                 | Cells show                        | Answers                     |
+| -------------------- | --------------------------------- | --------------------------- |
+| **Plan** _(default)_ | bricks — scheduled items          | what am I meant to be doing |
+| **Effort**           | intensity — focused work that day | what did I actually do      |
 
 They're exclusive, and that's what makes it work. Effort mode isn't squeezed in beside the bricks — it takes the cell over completely, so intensity gets the full ~92px instead of fighting for a few spare pixels. Neither mode has to compromise: bricks keep all three slots, and intensity gets real room.
 
 **Effort cell rendering**, as drawn in the prototype:
 
-| Day | Shows |
-|---|---|
-| Worked | hour figure above a bar, height and opacity both scaled against an 8-hour day |
-| Past, no work | a thin flat track — present but empty |
-| Future | nothing |
+| Day           | Shows                                                                         |
+| ------------- | ----------------------------------------------------------------------------- |
+| Worked        | hour figure above a bar, height and opacity both scaled against an 8-hour day |
+| Past, no work | a thin flat track — present but empty                                         |
+| Future        | nothing                                                                       |
 
 The three states matter more than they sound. An earlier pass drew a dash on every workless day and the back half of the month read as a rendering failure rather than a month that hasn't happened yet.
 
@@ -307,27 +308,27 @@ This is the app's whole thesis as a single control — the plan and the follow-t
 
 **Opening a day.** Tapping a day selects it and **slides a panel up from the bottom**, covering most of the screen: that day's items in time order in Plan mode, its sessions and totals in Effort mode. Drag it down, or tap the grid still visible above it, to dismiss — the day stays selected. `+N more` opens the same panel.
 
-> Swipe-up remains month navigation. This is a *tap*, and the slide is the transition rather than the gesture, so the two never compete.
+> Swipe-up remains month navigation. This is a _tap_, and the slide is the transition rather than the gesture, so the two never compete.
 
 **Adding items.** A floating button at the **bottom right**, sitting above the navbar. It prefills the date:
 
-| Opened from | New item's date |
-|---|---|
+| Opened from   | New item's date      |
+| ------------- | -------------------- |
 | Calendar view | the **selected day** |
-| Task view | **today** |
+| Task view     | **today**            |
 
 Two placement constraints: it must clear the bottom navbar, and it needs a real inset from the screen edge. Android reads a back-swipe from **both** left and right edges by default, so neither corner escapes that — an edge-hugging button gets swiped instead of tapped either way.
 
-> **The gesture conflict, and why overflow works the way it does.** Vertical swipe is taken by month navigation, so day cells *cannot* scroll internally — the two gestures would fight and both would feel broken. That's what forces `+N more` plus a detail sheet instead of a scrollable cell, and it means the grid must fit the viewport exactly, with no page scroll of its own. Everything about the month view follows from this one constraint.
+> **The gesture conflict, and why overflow works the way it does.** Vertical swipe is taken by month navigation, so day cells _cannot_ scroll internally — the two gestures would fight and both would feel broken. That's what forces `+N more` plus a detail sheet instead of a scrollable cell, and it means the grid must fit the viewport exactly, with no page scroll of its own. Everything about the month view follows from this one constraint.
 
 **Brick appearance** has to carry four independent signals at once, so each needs its own visual channel:
 
-| Signal | Channel |
-|---|---|
-| Project | fill colour |
+| Signal                     | Channel                             |
+| -------------------------- | ----------------------------------- |
+| Project                    | fill colour                         |
 | Timed / all-day / deadline | shape — solid bar, soft bar, marker |
-| Done or cancelled | dimmed + strikethrough |
-| Missed | accent border or icon |
+| Done or cancelled          | dimmed + strikethrough              |
+| Missed                     | accent border or icon               |
 
 Project colour is already spoken for, so status can't also be colour. Keep these on separate channels or bricks become unreadable at a glance.
 
@@ -361,13 +362,13 @@ Project colour is already spoken for, so status can't also be colour. Keep these
 
 Groups, in order:
 
-| Group | Contains | Row detail |
-|---|---|---|
-| **Missed** | open items whose time has passed | how late — `yesterday`, `3 days ago` |
-| **Events** | timed events today | start time |
-| **Due today** | deadlines falling today | time if it has one |
-| **All day** | all-day items covering today | — |
-| **Anytime** | unscheduled items | — |
+| Group         | Contains                         | Row detail                           |
+| ------------- | -------------------------------- | ------------------------------------ |
+| **Missed**    | open items whose time has passed | how late — `yesterday`, `3 days ago` |
+| **Events**    | timed events today               | start time                           |
+| **Due today** | deadlines falling today          | time if it has one                   |
+| **All day**   | all-day items covering today     | —                                    |
+| **Anytime**   | unscheduled items                | —                                    |
 
 The cap bounds the whole screen at roughly twenty rows however bad things get, which is what stops a neglected backlog from turning Today into something you scroll past. It also subsumes the recurring-item problem from §2.7: a daily task skipped for three weeks contributes at most three rows to Missed, not twenty-one, so no special-casing of series is needed.
 
@@ -379,7 +380,7 @@ This does require **Task view to accept a filter from a link** — "missed", "du
 
 ### 3.4 Task view
 
-The same items as the calendar, listed rather than laid out in time. Where the calendar answers *when*, this answers *what matters*.
+The same items as the calendar, listed rather than laid out in time. Where the calendar answers _when_, this answers _what matters_.
 
 **Grouping is fixed — the Eisenhower matrix, plus Daily:**
 
@@ -389,15 +390,15 @@ The same items as the calendar, listed rather than laid out in time. Where the c
 4. **Urgent, Not Important**
 5. **Neither**
 
-Always these five, always in this order, whatever the filter. Grouping expresses *importance*; filters narrow *which items are shown*. Two independent axes, which is what makes the screen work: you can filter to one project or to this week and still see the matrix inside it.
+Always these five, always in this order, whatever the filter. Grouping expresses _importance_; filters narrow _which items are shown_. Two independent axes, which is what makes the screen work: you can filter to one project or to this week and still see the matrix inside it.
 
 **Routine is derived, not assigned: any item that recurs.** `rrule !== null` and it goes there — every 2 days, every Monday, monthly, whatever the frequency. No stored flag, no extra UI, no threshold to argue about.
 
-Routine items appear **only** in that group, never also in a quadrant. That exclusion is the point: recurring things come back forever, so left in the matrix they would permanently occupy it, and a top quadrant filled with *take out the rubbish* and *read 20 pages* is what stops an Eisenhower view being worth opening. Routine keeps the four quadrants about decisions.
+Routine items appear **only** in that group, never also in a quadrant. That exclusion is the point: recurring things come back forever, so left in the matrix they would permanently occupy it, and a top quadrant filled with _take out the rubbish_ and _read 20 pages_ is what stops an Eisenhower view being worth opening. Routine keeps the four quadrants about decisions.
 
 > **The consequence: nothing recurring is ever classified.** A monthly report that genuinely is urgent and important still sits under Routine, not in the top quadrant. That's the cost of a clean rule, and it's survivable because Today surfaces recurring items through **Due today** and **Missed** regardless of this grouping — the matrix is for deciding, Today is for doing. If it ever chafes, the escape hatch is letting an item opt out of Routine with a stored flag.
 
-**New items default to `important: false`**, so anything captured quickly lands in **Neither** until you say otherwise. No Unclassified group; the bottom quadrant *is* the unclassified bucket.
+**New items default to `important: false`**, so anything captured quickly lands in **Neither** until you say otherwise. No Unclassified group; the bottom quadrant _is_ the unclassified bucket.
 
 > Worth knowing this is safer than it looks: because urgency is derived, an unclassified item that carries a due date climbs into **Urgent, Not Important** on its own as the deadline nears. Only genuinely undated, unimportant items stay at the bottom — which is where they belong.
 
@@ -405,7 +406,7 @@ Routine items appear **only** in that group, never also in a quadrant. That excl
 
 **Urgency is derived from the due date, not stored.** An item is urgent when its deadline falls inside `urgentWithinDays` — **one global number, default 2 days**, set in Settings. Only `important` is a stored flag.
 
-> This matters more than it looks. Urgency is a fact about *time*, so a stored urgency flag is wrong the moment the clock moves — something you marked "not urgent" three weeks ago is urgent now, and the app would have no idea. Deriving it means items migrate from **Important, Not Urgent** into **Urgent & Important** on their own as deadlines approach, which is the exact behaviour the matrix is supposed to teach. It's the same principle as *missed* in §2.2: never store what the clock can tell you.
+> This matters more than it looks. Urgency is a fact about _time_, so a stored urgency flag is wrong the moment the clock moves — something you marked "not urgent" three weeks ago is urgent now, and the app would have no idea. Deriving it means items migrate from **Important, Not Urgent** into **Urgent & Important** on their own as deadlines approach, which is the exact behaviour the matrix is supposed to teach. It's the same principle as _missed_ in §2.2: never store what the clock can tell you.
 >
 > It also means an item with no due date is never urgent — which is correct by definition, not a limitation.
 
@@ -433,7 +434,7 @@ Four equal buttons for time; project chips below, each carrying its colour dot. 
 
 **Completed items appear only under the Done filter.** Never inline, never greyed at the bottom of a group. The default view is work that remains.
 
-**Ordering inside a group is manual** — drag to arrange, held in `sortOrder`. This is what the fractional index in §6 exists for: reordering on two devices produces keys *between* neighbours instead of colliding integers.
+**Ordering inside a group is manual** — drag to arrange, held in `sortOrder`. This is what the fractional index in §6 exists for: reordering on two devices produces keys _between_ neighbours instead of colliding integers.
 
 > `sortOrder` is one continuous ordering across all items, which each group then filters. That matters because groups aren't fixed: an item crosses from **Important, Not Urgent** into **Urgent & Important** on its own as its deadline nears, and a single global order means it arrives already positioned relative to what's there — rather than landing at an arbitrary spot because each group kept its own numbering.
 
@@ -466,7 +467,7 @@ Takes over the screen once a session is running. Three regions, following Contin
 
 The one addition over Continuum is the **item**: the current segment names what you're working on, the history shows it per row, and **Switch item** closes the current segment and opens a new one against a different item — without taking a break. Picking from today's list is the obvious source. More than one item can be attached to a segment at a time.
 
-**Ticking an item off inside Work Mode does nothing to the clock.** It doesn't end the segment, doesn't end the session, doesn't prompt anything. Completion and timing are independent: you might finish six items in one segment, or run two at once for an hour. The timer tracks *time*; the checkbox tracks *state*; neither drives the other.
+**Ticking an item off inside Work Mode does nothing to the clock.** It doesn't end the segment, doesn't end the session, doesn't prompt anything. Completion and timing are independent: you might finish six items in one segment, or run two at once for an hour. The timer tracks _time_; the checkbox tracks _state_; neither drives the other.
 
 **Session summary** on End Session, again following Continuum: focus ring with the percentage, tiles for work total / break total / focus % / segment count, and a Done button. Corvonium adds a **per-item breakdown** — where the time actually went — which is the whole payoff of tracking items and time in one app.
 
@@ -525,7 +526,7 @@ Same views, a different shell — and two things become genuinely better rather 
 
 **A top bar replaces the bottom navbar.** Name at the left, the three destinations beside it, sync state and settings at the right. Month navigation becomes arrow buttons, since there is no swipe to spend.
 
-**The matrix becomes an actual matrix.** On a phone the Eisenhower groups have to stack vertically. With width they can be laid out as the 2×2 they actually describe — urgent along one axis, important along the other — with Routine as a strip above. This is the one place the desktop version is better rather than roomier: the grid *position* carries the meaning that the stacked list has to spell out in headers.
+**The matrix becomes an actual matrix.** On a phone the Eisenhower groups have to stack vertically. With width they can be laid out as the 2×2 they actually describe — urgent along one axis, important along the other — with Routine as a strip above. This is the one place the desktop version is better rather than roomier: the grid _position_ carries the meaning that the stacked list has to spell out in headers.
 
 **Bottom sheets become side panels.** The day detail and the item editor slide in from the right, so the calendar or list stays visible beside what you're editing.
 
@@ -544,23 +545,23 @@ Same views, a different shell — and two things become genuinely better rather 
 
 ## 4. The Stack
 
-| Layer | Choice | Role |
-|---|---|---|
-| Language | **TypeScript** | Everywhere |
-| Frontend | **React + Vite** | UI, built as an installable PWA |
-| Styling | **Tailwind CSS** | Utility-first styling |
-| Local DB / sync engine | **RxDB** | Reactive local database (IndexedDB), change tracking, replication |
-| Sync server | **Node.js + Fastify** | Small TS service exposing pull/push replication endpoints |
-| Server DB | **SQLite** (via `better-sqlite3`) | Single-file storage behind the sync server |
-| Dates | **date-fns** | Calendar math |
-| Recurrence | **rrule** | RFC 5545 rule parsing + occurrence expansion |
-| Capture parsing | **chrono-node** (English only) | Natural-language dates; Turkish dates, recurrence, project and importance all hand-rolled (§2.7) |
-| Dictation | **Whisper via WASM** | On-device transcription, multilingual, no audio leaves the phone |
-| Ordering | **fractional-indexing** | Conflict-tolerant manual sort order |
-| Desktop wrapper *(later)* | **Tauri** | Native desktop app around the same React code |
-| Mobile wrapper *(later, optional)* | **Capacitor** | Only if PWA notification limits bite |
-| Deployment *(later)* | **Docker + Caddy** | Containerized server + reverse proxy with auto-TLS |
-| Remote access *(later)* | **WireGuard / Tailscale** | Sync from outside LAN without exposing ports |
+| Layer                              | Choice                            | Role                                                                                             |
+| ---------------------------------- | --------------------------------- | ------------------------------------------------------------------------------------------------ |
+| Language                           | **TypeScript**                    | Everywhere                                                                                       |
+| Frontend                           | **React + Vite**                  | UI, built as an installable PWA                                                                  |
+| Styling                            | **Tailwind CSS**                  | Utility-first styling                                                                            |
+| Local DB / sync engine             | **RxDB**                          | Reactive local database (IndexedDB), change tracking, replication                                |
+| Sync server                        | **Node.js + Fastify**             | Small TS service exposing pull/push replication endpoints                                        |
+| Server DB                          | **SQLite** (via `better-sqlite3`) | Single-file storage behind the sync server                                                       |
+| Dates                              | **date-fns**                      | Calendar math                                                                                    |
+| Recurrence                         | **rrule**                         | RFC 5545 rule parsing + occurrence expansion                                                     |
+| Capture parsing                    | **chrono-node** (English only)    | Natural-language dates; Turkish dates, recurrence, project and importance all hand-rolled (§2.7) |
+| Dictation                          | **Whisper via WASM**              | On-device transcription, multilingual, no audio leaves the phone                                 |
+| Ordering                           | **fractional-indexing**           | Conflict-tolerant manual sort order                                                              |
+| Desktop wrapper _(later)_          | **Tauri**                         | Native desktop app around the same React code                                                    |
+| Mobile wrapper _(later, optional)_ | **Capacitor**                     | Only if PWA notification limits bite                                                             |
+| Deployment _(later)_               | **Docker + Caddy**                | Containerized server + reverse proxy with auto-TLS                                               |
+| Remote access _(later)_            | **WireGuard / Tailscale**         | Sync from outside LAN without exposing ports                                                     |
 
 ### Alternatives considered
 
@@ -608,7 +609,7 @@ All collections share sync-friendly fields. **Rules that everything depends on:*
 - `updatedAt`: epoch millis, set on every mutation. Used for last-write-wins conflict resolution.
 - **Never hard-delete.** Deleting sets a tombstone that syncs like any other change. Use **RxDB's built-in `_deleted`** via `doc.remove()` rather than a field of our own: queries exclude tombstones automatically, and the replication protocol already propagates them. (`deleted` is a reserved field name in RxDB for exactly this reason.) Optionally purge tombstones server-side once every client has seen them, e.g. after 30+ days.
 
-### `items` — tasks *and* events
+### `items` — tasks _and_ events
 
 ```ts
 {
@@ -655,8 +656,8 @@ All collections share sync-friendly fields. **Rules that everything depends on:*
 - **There is no `missed` field, and no `urgent` field.** Both are queries. Missed is `status === 'open'` and the item's time has passed; urgent is a due date inside `urgentWithinDays`. Storing either would need a background job to flip it — exactly the kind of thing that breaks on a device that was asleep, offline, or in another timezone. Only `important` is stored, because only `important` is a judgement rather than a fact about the clock.
 - **There is no `priority`.** The Eisenhower grouping in §3.4 replaced it.
 - **`cancelled` ≠ `deleted`.** Cancelled is a real outcome the user chose and it stays visible in history. `deleted` is a tombstone meaning the record shouldn't exist at all.
-- **Recurrence is expanded at render time** with the `rrule` library — never materialize every occurrence as a row. Completing, cancelling, or editing a single occurrence creates an override item carrying `seriesId` + `originalStart`. *("This and all following" edits still need a decision — see Open Questions in §7.)*
-- **`sortOrder` is a string, not a number.** Numeric order breaks under last-write-wins: two devices reordering produce ties and duplicates. Fractional indexing generates a key *between* two neighbours, so reorders never renumber and never collide.
+- **Recurrence is expanded at render time** with the `rrule` library — never materialize every occurrence as a row. Completing, cancelling, or editing a single occurrence creates an override item carrying `seriesId` + `originalStart`. _("This and all following" edits still need a decision — see Open Questions in §7.)_
+- **`sortOrder` is a string, not a number.** Numeric order breaks under last-write-wins: two devices reordering produce ties and duplicates. Fractional indexing generates a key _between_ two neighbours, so reorders never renumber and never collide.
 
 ### `subtasks`
 
@@ -721,7 +722,7 @@ One document per session, with its segments embedded.
 
 > **Segments are embedded here, unlike subtasks.** The rule is who writes them and when. A checklist is edited on any device, forever, so its entries must be separate documents to merge. A session is appended to by exactly one device, then frozen — no second writer ever exists, so there is nothing to merge and an array is simply the honest shape.
 
-> **The running timer is never synced.** It is local state until the session ends. Render every clock from `startedAt` and the wall clock (`elapsed = now - startedAt`), never from an accumulating `setInterval` counter — that's what makes the timer survive tab suspension, phone sleep, and app restarts. Counting *up* rather than down makes this easier than it was in the pomodoro model: there's no target to overshoot while the device was asleep.
+> **The running timer is never synced.** It is local state until the session ends. Render every clock from `startedAt` and the wall clock (`elapsed = now - startedAt`), never from an accumulating `setInterval` counter — that's what makes the timer survive tab suspension, phone sleep, and app restarts. Counting _up_ rather than down makes this easier than it was in the pomodoro model: there's no target to overshoot while the device was asleep.
 
 ### `settings` (synced app preferences)
 
@@ -758,7 +759,7 @@ RxDB replicates each collection via HTTP endpoints **you implement** on the Fast
 
 ### Server-side storage
 
-One SQLite table per collection mirroring the document shape, plus indexes for checkpoint queries. The server is *dumb by design*: it stores documents, orders them by change time, and relays them. All app logic lives in clients.
+One SQLite table per collection mirroring the document shape, plus indexes for checkpoint queries. The server is _dumb by design_: it stores documents, orders them by change time, and relays them. All app logic lives in clients.
 
 ### Conflict resolution
 
@@ -809,15 +810,15 @@ src/
 Guidelines:
 
 - **The database is the state manager.** No Redux/Zustand for domain data — components subscribe to RxDB queries directly (thin hooks like `useItems(filter)`). Keep component-local state (open dialogs, form drafts) in React state.
-- **One item editor**, shared by all three screens. Since tasks and events are one type, there is one edit surface; the screens differ in how they *list* items, not how they *edit* them.
+- **One item editor**, shared by all three screens. Since tasks and events are one type, there is one edit surface; the screens differ in how they _list_ items, not how they _edit_ them.
 - **Work mode as a state machine:** `idle → work ⇄ break → ended`, driven entirely by the user rather than by elapsed time. Persist the in-progress session locally so a reload or app restart resumes it exactly — the segment list plus wall-clock arithmetic is all the state there is.
-- **Notifications:** use the Notification API + service worker. Works well on desktop and Android; iOS PWA background notifications are unreliable — the eventual argument for Capacitor. *(Scheduled due-date reminders need a real decision — browsers can't reliably schedule future local notifications.)*
+- **Notifications:** use the Notification API + service worker. Works well on desktop and Android; iOS PWA background notifications are unreliable — the eventual argument for Capacitor. _(Scheduled due-date reminders need a real decision — browsers can't reliably schedule future local notifications.)_
 
 ### PWA specifics
 
 - **Service worker** via `vite-plugin-pwa` (Workbox under the hood): precache the app shell so it boots with zero network.
 - **Web app manifest**: name, icons, `display: standalone`, theme color → installable on phone home screen.
-- App data lives in IndexedDB, *not* the service worker cache — the SW only caches code/assets.
+- App data lives in IndexedDB, _not_ the service worker cache — the SW only caches code/assets.
 - Request **persistent storage** (`navigator.storage.persist()`) to reduce eviction risk on mobile.
 
 ---
@@ -860,7 +861,7 @@ corvonium/
 └── package.json
 ```
 
-**pnpm workspaces, with a shared package that carries real weight.** "One language everywhere" only pays for itself if both sides import the *same* definitions instead of each keeping a copy that quietly drifts. `packages/shared` holds:
+**pnpm workspaces, with a shared package that carries real weight.** "One language everywhere" only pays for itself if both sides import the _same_ definitions instead of each keeping a copy that quietly drifts. `packages/shared` holds:
 
 - TypeScript types for every document
 - the RxDB JSON schemas, derived from those types
@@ -883,14 +884,14 @@ The parts most likely to break are pure functions, which is fortunate: they're t
 
 **Sync scenarios — two RxDB instances against an in-memory server.** These are what let you refactor sync later without fear, and they are exactly the tests that never get written by accident:
 
-| Scenario | Should |
-|---|---|
-| Same item edited on two clients | one wins; neither is lost silently |
-| Delete on A, edit on B | tombstone and edit resolve deterministically |
-| Client offline three days, then pushes | other clients receive it — this is the `serverSeq` test |
-| Reorder on both clients | no duplicate or colliding `sortOrder` |
-| One client's clock five minutes fast | it doesn't win every conflict |
-| Checkpoint older than the purge horizon | forces a full resync; nothing resurrects |
+| Scenario                                | Should                                                  |
+| --------------------------------------- | ------------------------------------------------------- |
+| Same item edited on two clients         | one wins; neither is lost silently                      |
+| Delete on A, edit on B                  | tombstone and edit resolve deterministically            |
+| Client offline three days, then pushes  | other clients receive it — this is the `serverSeq` test |
+| Reorder on both clients                 | no duplicate or colliding `sortOrder`                   |
+| One client's clock five minutes fast    | it doesn't win every conflict                           |
+| Checkpoint older than the purge horizon | forces a full resync; nothing resurrects                |
 
 ### Import and export
 
@@ -902,18 +903,18 @@ In-memory filtering over `items`. At a few thousand documents this is instant, n
 
 ### To confirm before depending on them
 
-- **RxDB storage licensing.** Phase 1 runs on the IndexedDB/Dexie storage; some storages and performance plugins are Premium. Check which tier the ones you want sit in *before* the Tauri phase depends on one.
+- **RxDB storage licensing.** Phase 1 runs on the IndexedDB/Dexie storage; some storages and performance plugins are Premium. Check which tier the ones you want sit in _before_ the Tauri phase depends on one.
 - **Whisper's real cost** — model size and single-threaded speed on your actual phone, measured before deciding whether cross-origin isolation is worth imposing on the whole origin.
 
 ### Notifications — the decision that reshapes the server
 
-| Approach | Reach | Cost |
-|---|---|---|
-| None — in-app only | works today | no reminder while the app is closed, which is exactly when you need one |
-| Web Push + server scheduler | desktop, Android, installed iOS PWA | VAPID keys, a subscription store, and a scheduler on the server — it stops being dumb |
-| Capacitor local notifications | reliable everywhere | pulls Phase 5 forward to Phase 3 |
+| Approach                      | Reach                               | Cost                                                                                  |
+| ----------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------- |
+| None — in-app only            | works today                         | no reminder while the app is closed, which is exactly when you need one               |
+| Web Push + server scheduler   | desktop, Android, installed iOS PWA | VAPID keys, a subscription store, and a scheduler on the server — it stops being dumb |
+| Capacitor local notifications | reliable everywhere                 | pulls Phase 5 forward to Phase 3                                                      |
 
-Phases 1–3 can ship without scheduled reminders. The decision has to land before Phase 3 closes, because the second option changes what the server *is*, and the third changes when it gets wrapped.
+Phases 1–3 can ship without scheduled reminders. The decision has to land before Phase 3 closes, because the second option changes what the server _is_, and the third changes when it gets wrapped.
 
 ---
 

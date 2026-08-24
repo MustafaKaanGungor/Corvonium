@@ -7,7 +7,7 @@ import { itemSchema } from './schema/items';
 addRxPlugin(RxDBMigrationSchemaPlugin);
 
 export type CorvoniumCollections = {
-    items: RxCollection<Item>;
+  items: RxCollection<Item>;
 };
 
 export type CorvoniumDatabase = RxDatabase<CorvoniumCollections>;
@@ -15,8 +15,8 @@ export type CorvoniumDatabase = RxDatabase<CorvoniumCollections>;
 let dbPromise: Promise<CorvoniumDatabase> | null = null;
 
 export function getDatabase(): Promise<CorvoniumDatabase> {
-    dbPromise ??= create();
-    return dbPromise;
+  dbPromise ??= create();
+  return dbPromise;
 }
 
 async function create(): Promise<CorvoniumDatabase> {

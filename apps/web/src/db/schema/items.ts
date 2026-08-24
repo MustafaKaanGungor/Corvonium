@@ -1,4 +1,4 @@
-import type { Item} from '@corvonium/shared';
+import type { Item } from '@corvonium/shared';
 import type { RxJsonSchema } from 'rxdb';
 
 export const itemSchema: RxJsonSchema<Item> = {
@@ -46,11 +46,18 @@ export const itemSchema: RxJsonSchema<Item> = {
       maximum: 9999999999999,
       multipleOf: 1,
     },
-    },
+  },
   required: [
-    'id', 'title', 'notes', 'kind', 'allDay',
-    'status', 'important', 'sortOrder',
-    'createdAt', 'updatedAt',
+    'id',
+    'title',
+    'notes',
+    'kind',
+    'allDay',
+    'status',
+    'important',
+    'sortOrder',
+    'createdAt',
+    'updatedAt',
   ],
   indexes: ['updatedAt'],
 };
