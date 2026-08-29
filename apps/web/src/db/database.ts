@@ -1,13 +1,15 @@
 import { addRxPlugin, createRxDatabase, type RxCollection, type RxDatabase } from 'rxdb';
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
 import { RxDBMigrationSchemaPlugin } from 'rxdb/plugins/migration-schema';
-import type { Item } from '@corvonium/shared';
+import type { Item, Project } from '@corvonium/shared';
 import { itemSchema } from './schema/items';
+import { projectSchema } from './schema/projects';
 
 addRxPlugin(RxDBMigrationSchemaPlugin);
 
 export type CorvoniumCollections = {
   items: RxCollection<Item>;
+  projects: RxCollection<Project>;
 };
 
 export type CorvoniumDatabase = RxDatabase<CorvoniumCollections>;
@@ -32,6 +34,10 @@ async function create(): Promise<CorvoniumDatabase> {
       schema: itemSchema,
       migrationStrategies: {},
     },
+    projects: {
+      schema: projectSchema,
+      migrationStrategies: {},
+    }
   });
 
   return db;

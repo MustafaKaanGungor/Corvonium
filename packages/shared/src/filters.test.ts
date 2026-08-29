@@ -1,0 +1,32 @@
+import { describe, expect, it } from 'vitest';
+import { createItem } from './create';
+import { matchesTimeFilter } from './filters';
+import type { Item } from './types';
+
+const NOW = Date.UTC(2026, 7, 15, 12, 0);
+const DAY = 24 * 60 * 60 * 1000;
+const make = (over: Partial<Item>) => createItem({ title: 't', ...over }, NOW, 'id');
+
+describe('matchesTimeFilter', () => {
+  it('all: open items only', () => {
+    expect(matchesTimeFilter(make({}), NOW, 'all')).toBe(true);
+    expect(matchesTimeFilter(make({ status: 'done' }), NOW, 'all')).toBe(false);
+  });
+
+  it('done: only completed items — the way back from a mistaken tap', () => {
+    expect(matchesTimeFilter(make({ status: 'done' }), NOW, 'done')).toBe(true);
+    expect(matchesTimeFilter(make({}), NOW, 'done')).toBe(false);
+  });
+
+  it('missed: open and past its deadline', () => {
+    expect(matchesTimeFilter(make({ due: NOW - DAY }), NOW, 'missed')).toBe(true);
+    expect(matchesTimeFilter(make({ due: NOW + DAY }), NOW, 'missed')).toBe(false);
+  });
+
+  it('this-week: due inside seven days, overdue included', () => {
+    expect(matchesTimeFilter(make({ due: NOW + 3 * DAY }), NOW, 'this-week')).toBe(true);
+    expect(matchesTimeFilter(make({ due: NOW - 3 * DAY }), NOW, 'this-week')).toBe(true);
+    expect(matchesTimeFilter(make({ due: NOW + 30 * DAY }), NOW, 'this-week')).toBe(false);
+    expect(matchesTimeFilter(make({}), NOW, 'this-week')).toBe(false);
+  });
+});

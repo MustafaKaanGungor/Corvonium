@@ -35,3 +35,13 @@ export interface Item {
   createdAt: number;
   updatedAt: number;
 }
+
+export interface Project {
+  id: string;
+  name: string;
+  color: string;
+  archived: boolean;
+  sortOrder: string;
+  createdAt: number;
+  updatedAt: number;
+}

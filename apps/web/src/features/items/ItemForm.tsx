@@ -1,19 +1,27 @@
 import { useState, type FormEvent } from 'react';
-import type { NewItem } from '@corvonium/shared';
-import { fromDateTimeLocal } from '../../lib/format';
+import type { Item } from '@corvonium/shared';
+import { fromDateTimeLocal, toDateTimeLocal } from '../../lib/format';
+
+export type ItemDraft =  {
+  title: string;
+  notes: string;
+  due: number | null;
+  important: boolean;
+};
 
 type Props = {
-  onSubmit: (draft: NewItem) => void;
+  initial?: Item;
+  onSubmit: (draft: ItemDraft) => void;
   onCancel: () => void;
 };
 
 const field = 'w-full rounded-lg bg-[#1C241E] border border-[#28322B] px-3 py-2 text-[#E8EFE9]';
 
-export function ItemForm({ onSubmit, onCancel }: Props) {
-  const [title, setTitle] = useState('');
-  const [notes, setNotes] = useState('');
-  const [due, setDue] = useState('');
-  const [important, setImportant] = useState(false);
+export function ItemForm({initial, onSubmit, onCancel }: Props) {
+  const [title, setTitle] = useState(initial?.title ?? '');
+  const [notes, setNotes] = useState(initial?.notes ?? '');
+  const [due, setDue] = useState(initial?.due != null ? toDateTimeLocal(initial.due) : '');
+  const [important, setImportant] = useState(initial?.important ?? false);
 
   const canSave = title.trim().length > 0;
 
@@ -71,7 +79,7 @@ export function ItemForm({ onSubmit, onCancel }: Props) {
           disabled={!canSave}
           className="flex-1 rounded-lg bg-[#4CC26A] px-4 py-2 font-semibold text-[#06210F] disabled:opacity-40"
         >
-          Add
+          {initial ? 'Save' : 'Add'}
         </button>
         <button
           type="button"

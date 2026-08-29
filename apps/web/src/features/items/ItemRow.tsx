@@ -2,7 +2,7 @@ import { isMissed, type Item } from '@corvonium/shared';
 import { toggleDone } from '../../db/items';
 import { formatDate, formatTime } from '../../lib/format';
 
-export function ItemRow({ item, now }: { item: Item; now: number }) {
+export function ItemRow({ item, now, onOpen }: { item: Item; now: number; onOpen: () => void }) {
   const done = item.status === 'done';
   const missed = isMissed(item, now);
 
@@ -18,7 +18,7 @@ export function ItemRow({ item, now }: { item: Item; now: number }) {
         {done ? '✓' : ''}
       </button>
 
-      <div className="min-w-0">
+      <button onClick={onOpen} className='min-w-0 flex-1 text-left'>
         <div className={done ? 'text-[#5F6E66] line-through' : ''}>{item.title}</div>
         {item.due !== null && (
           <div className={`text-xs ${missed ? 'text-[#D9614F]' : 'text-[#8A9990]'}`}>
@@ -26,7 +26,8 @@ export function ItemRow({ item, now }: { item: Item; now: number }) {
             {formatDate(item.due)} · {formatTime(item.due)}
           </div>
         )}
-      </div>
+      </button>
+      
     </li>
   );
 }
