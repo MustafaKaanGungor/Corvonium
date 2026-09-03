@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createItem } from './create';
-import { matchesTimeFilter } from './filters';
+import { matchesProjectFilter, matchesTimeFilter } from './filters';
 import type { Item } from './types';
 
 const NOW = Date.UTC(2026, 7, 15, 12, 0);
@@ -13,14 +13,26 @@ describe('matchesTimeFilter', () => {
     expect(matchesTimeFilter(make({ status: 'done' }), NOW, 'all')).toBe(false);
   });
 
-  it('done: only completed items — the way back from a mistaken tap', () => {
+  it('done: anything resolved — the way back from a mistaken tap', () => {
     expect(matchesTimeFilter(make({ status: 'done' }), NOW, 'done')).toBe(true);
+    expect(matchesTimeFilter(make({ status: 'cancelled' }), NOW, 'done')).toBe(true);
     expect(matchesTimeFilter(make({}), NOW, 'done')).toBe(false);
   });
 
   it('missed: open and past its deadline', () => {
     expect(matchesTimeFilter(make({ due: NOW - DAY }), NOW, 'missed')).toBe(true);
     expect(matchesTimeFilter(make({ due: NOW + DAY }), NOW, 'missed')).toBe(false);
+  });
+
+  it('project filter: null lets everything through, including unassigned items', () => {
+    expect(matchesProjectFilter(make({ projectId: 'p1' }), null)).toBe(true);
+    expect(matchesProjectFilter(make({ projectId: null }), null)).toBe(true);
+  });
+
+  it('project filter: an id matches only that project', () => {
+    expect(matchesProjectFilter(make({ projectId: 'p1' }), 'p1')).toBe(true);
+    expect(matchesProjectFilter(make({ projectId: 'p2' }), 'p1')).toBe(false);
+    expect(matchesProjectFilter(make({ projectId: null }), 'p1')).toBe(false);
   });
 
   it('this-week: due inside seven days, overdue included', () => {

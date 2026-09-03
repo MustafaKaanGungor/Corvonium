@@ -37,7 +37,7 @@ async function create(): Promise<CorvoniumDatabase> {
     projects: {
       schema: projectSchema,
       migrationStrategies: {},
-    }
+    },
   });
 
   return db;

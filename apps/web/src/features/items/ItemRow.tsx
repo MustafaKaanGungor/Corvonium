@@ -1,9 +1,18 @@
-import { isMissed, type Item } from '@corvonium/shared';
+import { isMissed, type Item, type Project } from '@corvonium/shared';
 import { toggleDone } from '../../db/items';
 import { formatDate, formatTime } from '../../lib/format';
 
-export function ItemRow({ item, now, onOpen }: { item: Item; now: number; onOpen: () => void }) {
+type Props = {
+  item: Item;
+  now: number;
+  project?: Project;
+  onOpen: () => void;
+};
+
+export function ItemRow({ item, now, project, onOpen }: Props) {
   const done = item.status === 'done';
+  const cancelled = item.status === 'cancelled';
+  const resolved = done || cancelled;
   const missed = isMissed(item, now);
 
   return (
@@ -18,16 +27,29 @@ export function ItemRow({ item, now, onOpen }: { item: Item; now: number; onOpen
         {done ? '✓' : ''}
       </button>
 
-      <button onClick={onOpen} className='min-w-0 flex-1 text-left'>
-        <div className={done ? 'text-[#5F6E66] line-through' : ''}>{item.title}</div>
-        {item.due !== null && (
-          <div className={`text-xs ${missed ? 'text-[#D9614F]' : 'text-[#8A9990]'}`}>
-            {missed ? 'Missed · ' : 'Due '}
-            {formatDate(item.due)} · {formatTime(item.due)}
-          </div>
+      <button onClick={onOpen} className="min-w-0 flex-1 text-left">
+        <div className={resolved ? 'text-[#5F6E66] line-through' : ''}>{item.title}</div>
+
+        {cancelled ? (
+          <div className="text-xs text-[#E0A040]">Cancelled</div>
+        ) : (
+          item.due !== null && (
+            <div className={`text-xs ${missed ? 'text-[#D9614F]' : 'text-[#8A9990]'}`}>
+              {missed ? 'Missed · ' : 'Due '}
+              {formatDate(item.due)} · {formatTime(item.due)}
+            </div>
+          )
         )}
       </button>
-      
+
+      {project && (
+        <span
+          title={project.name}
+          className="mt-2 h-[7px] w-[7px] shrink-0 rounded-full"
+          style={{ background: project.color }}
+        />
+      )}
+
     </li>
   );
 }

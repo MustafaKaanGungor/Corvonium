@@ -1,4 +1,12 @@
-import { matchesTimeFilter, matrixGroup, type Item, type MatrixGroup, type TimeFilter } from '@corvonium/shared';
+import {
+  matchesProjectFilter,
+  matchesTimeFilter,
+  matrixGroup,
+  type Item,
+  type MatrixGroup,
+  type TimeFilter,
+  type Project,
+} from '@corvonium/shared';
 import { ItemRow } from '../items/ItemRow';
 
 // Until settings exist. Plan §2.8: one global number, default 2.
@@ -12,8 +20,25 @@ const GROUPS: { key: MatrixGroup; label: string }[] = [
   { key: 'neither', label: 'Neither' },
 ];
 
-export function TaskView({ items, now , filter,  onOpen}: { items: Item[]; now: number; filter: TimeFilter, onOpen: (item: Item) => void}) {
-  const visible = items.filter((i) => matchesTimeFilter(i, now, filter));
+export function TaskView({
+  items,
+  projects,
+  now,
+  filter,
+  projectFilter,
+  onOpen,
+}: {
+  items: Item[];
+  projects: Project[];
+  now: number;
+  filter: TimeFilter;
+  projectFilter: string | null;
+  onOpen: (item: Item) => void;
+}) {
+  // The two axes are independent and combine — plan §3.4.
+  const visible = items.filter(
+    (i) => matchesTimeFilter(i, now, filter) && matchesProjectFilter(i, projectFilter),
+  );
 
   return (
     <div className="space-y-5">
@@ -29,7 +54,13 @@ export function TaskView({ items, now , filter,  onOpen}: { items: Item[]; now: 
             ) : (
               <ul className="space-y-1.5">
                 {inGroup.map((item) => (
-                  <ItemRow key={item.id} item={item} now={now} onOpen={() => onOpen(item)} />
+                  <ItemRow
+                    key={item.id}
+                    item={item}
+                    now={now}
+                    project={projects.find((p) => p.id === item.projectId)}
+                    onOpen={() => onOpen(item)}
+                  />
                 ))}
               </ul>
             )}
