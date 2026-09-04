@@ -4,7 +4,7 @@ export type ItemStatus = 'open' | 'done' | 'cancelled';
 export interface Item {
   id: string;
   title: string;
-  notes?: string;
+  notes: string;
   kind: ItemKind;
 
   // scheduling — any combination, all optional

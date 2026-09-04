@@ -35,12 +35,3 @@ export function keyAtIndex(ordered: string[], index: number): string {
   const after = ordered[index] ?? null;
   return keyBetween(before, after);
 }
-
-/**
- * The key the item at `from` needs to sit at index `to`.
- * `to` is its index in the list *after* it has been lifted out.
- */
-export function keyForReorder(ordered: string[], from: number, to: number): string {
-  const without = ordered.filter((_, index) => index !== from);
-  return keyAtIndex(without, to);
-}

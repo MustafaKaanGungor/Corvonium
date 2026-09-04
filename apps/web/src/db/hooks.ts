@@ -2,8 +2,25 @@ import { useEffect, useState } from 'react';
 import type { Item, Project } from '@corvonium/shared';
 import { getDatabase } from './database';
 
-export function useItems(): Item[] | null {
-  const [items, setItems] = useState<Item[] | null>(null);
+/**
+ * The result of a live query.
+ *
+ * `data === null` means the first result has not arrived; `error !== null` means it
+ * never will. Keeping them apart is what stops a database failure from looking
+ * exactly like a slow load.
+ */
+export type Query<T> = {
+  data: T[] | null;
+  error: string | null;
+};
+
+function message(err: unknown): string {
+  return err instanceof Error ? err.message : String(err);
+}
+
+export function useItems(): Query<Item> {
+  const [data, setData] = useState<Item[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -13,12 +30,16 @@ export function useItems(): Item[] | null {
       .then((db) => {
         if (cancelled) return;
         sub = db.items.find().$.subscribe({
-          next: (docs) => setItems(docs.map((doc) => doc.toJSON() as Item)),
-          error: (err) => console.error('[corvonium] items query failed', err),
+          next: (docs) => setData(docs.map((doc) => doc.toJSON() as Item)),
+          error: (err) => {
+            console.error('[corvonium] items query failed', err);
+            setError(message(err));
+          },
         });
       })
       .catch((err) => {
         console.error('[corvonium] database failed to open', err);
+        if (!cancelled) setError(message(err));
       });
 
     return () => {
@@ -27,11 +48,12 @@ export function useItems(): Item[] | null {
     };
   }, []);
 
-  return items;
+  return { data, error };
 }
 
-export function useProjects(): Project[] | null {
-  const [projects, setProjects] = useState<Project[] | null>(null);
+export function useProjects(): Query<Project> {
+  const [data, setData] = useState<Project[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -41,11 +63,17 @@ export function useProjects(): Project[] | null {
       .then((db) => {
         if (cancelled) return;
         sub = db.projects.find().$.subscribe({
-          next: (docs) => setProjects(docs.map((doc) => doc.toJSON() as Project)),
-          error: (err) => console.error('[corvonium] projects query failed', err),
+          next: (docs) => setData(docs.map((doc) => doc.toJSON() as Project)),
+          error: (err) => {
+            console.error('[corvonium] projects query failed', err);
+            setError(message(err));
+          },
         });
       })
-      .catch((err) => console.error('[corvonium] database failed to open', err));
+      .catch((err) => {
+        console.error('[corvonium] database failed to open', err);
+        if (!cancelled) setError(message(err));
+      });
 
     return () => {
       cancelled = true;
@@ -53,5 +81,5 @@ export function useProjects(): Project[] | null {
     };
   }, []);
 
-  return projects;
+  return { data, error };
 }

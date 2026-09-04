@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { keyAtIndex, keyAtTop, keyBetween, keyForReorder } from './ordering';
+import { keyAtIndex, keyAtTop, keyBetween } from './ordering';
 
 /** The guarantee the whole design rests on: plain `<`, never localeCompare. */
 const sorted = (keys: string[]) => keys.toSorted((a, b) => (a < b ? -1 : a > b ? 1 : 0));
@@ -55,32 +55,5 @@ describe('keyAtIndex', () => {
 
   it('works on an empty list', () => {
     expect(typeof keyAtIndex([], 0)).toBe('string');
-  });
-});
-
-describe('keyForReorder', () => {
-  const a = keyBetween(null, null);
-  const b = keyBetween(a, null);
-  const c = keyBetween(b, null);
-  const list = [a, b, c];
-
-  it('moves the first item to the end', () => {
-    const moved = keyForReorder(list, 0, 2);
-    expect(sorted([b, c, moved])).toEqual([b, c, moved]);
-  });
-
-  it('moves the last item to the front', () => {
-    const moved = keyForReorder(list, 2, 0);
-    expect(sorted([a, b, moved])).toEqual([moved, a, b]);
-  });
-
-  it('moves a middle item down by one', () => {
-    // [a, b, c] with b lifted out is [a, c]; index 1 puts it back between them
-    const moved = keyForReorder(list, 1, 1);
-    expect(sorted([a, c, moved])).toEqual([a, moved, c]);
-  });
-
-  it('handles a single-item list', () => {
-    expect(typeof keyForReorder([a], 0, 0)).toBe('string');
   });
 });

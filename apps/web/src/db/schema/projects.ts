@@ -1,19 +1,5 @@
 import type { RxJsonSchema } from 'rxdb';
-import { createProject, PROJECT_COLOURS, type Project } from '@corvonium/shared';
-import { getDatabase } from '../database';
-
-export async function addProject(name: string): Promise<void> {
-  const db = await getDatabase();
-  const existing = await db.projects.find().exec();
-  const color = PROJECT_COLOURS[existing.length % PROJECT_COLOURS.length]!;
-  await db.projects.insert(createProject(name, color, Date.now(), crypto.randomUUID()));
-}
-
-export async function removeProject(id: string): Promise<void> {
-  const db = await getDatabase();
-  const doc = await db.projects.findOne(id).exec();
-  await doc?.remove();
-}
+import type { Project } from '@corvonium/shared';
 
 export const projectSchema: RxJsonSchema<Project> = {
   title: 'project',

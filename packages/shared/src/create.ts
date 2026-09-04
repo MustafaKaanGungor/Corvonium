@@ -1,6 +1,6 @@
 import type { Item, Project } from './types';
 
-export type NewItem = Partial<Omit<Item, 'id' | 'createdAt' | 'updatedAt' | 'deleted'>> & {
+export type NewItem = Partial<Omit<Item, 'id' | 'createdAt' | 'updatedAt'>> & {
   title: string;
 };
 

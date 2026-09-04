@@ -1,4 +1,4 @@
-import { isMissed } from './derive';
+import { effectiveDue, isMissed } from './derive';
 import type { Item } from './types';
 
 export type TimeFilter = 'all' | 'missed' | 'this-week' | 'done';
@@ -13,8 +13,12 @@ export function matchesTimeFilter(item: Item, now: number, filter: TimeFilter): 
       return item.status !== 'open';
     case 'missed':
       return isMissed(item, now);
-    case 'this-week':
-      return item.status === 'open' && item.due !== null && item.due <= now + 7 * DAY;
+    case 'this-week': {
+      if (item.status !== 'open') return false;
+      // effectiveDue, not `due`: an all-day item this week has no `due` at all.
+      const due = effectiveDue(item);
+      return due !== null && due <= now + 7 * DAY;
+    }
     case 'all':
       return item.status === 'open';
   }

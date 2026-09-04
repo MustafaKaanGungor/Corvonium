@@ -42,3 +42,20 @@ describe('matchesTimeFilter', () => {
     expect(matchesTimeFilter(make({}), NOW, 'this-week')).toBe(false);
   });
 });
+
+describe('matchesTimeFilter with all-day items', () => {
+  it('this-week includes an all-day item dated inside the window', () => {
+    const item = make({ allDay: true, startDate: '2026-08-18' });
+    expect(matchesTimeFilter(item, NOW, 'this-week')).toBe(true);
+  });
+
+  it('this-week excludes one beyond the window', () => {
+    const item = make({ allDay: true, startDate: '2026-09-30' });
+    expect(matchesTimeFilter(item, NOW, 'this-week')).toBe(false);
+  });
+
+  it('missed catches an all-day item whose last day has passed', () => {
+    const item = make({ allDay: true, startDate: '2026-08-13', endDate: '2026-08-14' });
+    expect(matchesTimeFilter(item, NOW, 'missed')).toBe(true);
+  });
+});

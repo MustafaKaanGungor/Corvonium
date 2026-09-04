@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { Item, TimeFilter } from '@corvonium/shared';
 import { useItems, useProjects } from './db/hooks';
 import { addItem, editItem, removeItem, setStatus } from './db/items';
-import { addProject } from './db/schema/projects';
+import { addProject } from './db/projects';
 import { useNow } from './lib/useNow';
 import { formatDayLabel } from './lib/format';
 import { Sheet } from './components/Sheet';
@@ -12,8 +12,8 @@ import { ProjectFilter } from './features/tasks/ProjectFilter';
 import { TaskView } from './features/tasks/TaskView';
 
 export default function App() {
-  const items = useItems();
-  const projects = useProjects();
+  const { data: items, error: itemsError } = useItems();
+  const { data: projects } = useProjects();
   const now = useNow();
 
   const [adding, setAdding] = useState(false);
@@ -96,7 +96,15 @@ export default function App() {
         />
       </div>
 
-      {items && (
+      {itemsError !== null ? (
+        <p className="rounded-lg border border-[#D9614F]/40 bg-[#D9614F]/10 p-4 text-sm text-[#D9614F]">
+          Could not open your data: {itemsError}
+          <br />
+          <span className="text-[#8A9990]">Your items are safe on this device. Try reloading.</span>
+        </p>
+      ) : items === null ? (
+        <p className="p-4 text-sm text-[#5F6E66]">Loading&hellip;</p>
+      ) : (
         <TaskView
           items={items}
           projects={projects ?? []}

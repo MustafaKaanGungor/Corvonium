@@ -1,0 +1,637 @@
+<title>Corvonium Block Two Review</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,300;0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<style>
+  :root {
+    --paper: #F2F5F1;
+    --panel: #FBFCFA;
+    --ink: #141A16;
+    --ink-dim: #55625A;
+    --ink-faint: #8A968E;
+    --rule: #D8E0D9;
+    --rule-soft: #E6ECE6;
+    --accent: #2C7A47;
+    --crit: #A93B2B;
+    --warn: #99701C;
+    --note: #4E7286;
+    --code-bg: #E9EFE9;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #0C110E;
+      --panel: #141A16;
+      --ink: #E7EEE8;
+      --ink-dim: #94A29A;
+      --ink-faint: #6C7B73;
+      --rule: #232C26;
+      --rule-soft: #1B231D;
+      --accent: #5BCB79;
+      --crit: #E07A66;
+      --warn: #D6A94E;
+      --note: #86B0C6;
+      --code-bg: #19211B;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --paper: #0C110E;
+    --panel: #141A16;
+    --ink: #E7EEE8;
+    --ink-dim: #94A29A;
+    --ink-faint: #6C7B73;
+    --rule: #232C26;
+    --rule-soft: #1B231D;
+    --accent: #5BCB79;
+    --crit: #E07A66;
+    --warn: #D6A94E;
+    --note: #86B0C6;
+    --code-bg: #19211B;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: Spectral, Georgia, "Times New Roman", serif;
+    font-size: 17px;
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 820px; margin: 0 auto; padding: 60px 26px 110px; }
+
+  code, .mono {
+    font-family: "IBM Plex Mono", ui-monospace, "SF Mono", Consolas, monospace;
+  }
+  code {
+    font-size: .84em;
+    background: var(--code-bg);
+    padding: .1em .38em;
+    border-radius: 3px;
+  }
+
+  /* ---- masthead ---- */
+  .mast { border-bottom: 2px solid var(--ink); padding-bottom: 26px; }
+  .eyebrow {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px; font-weight: 500; letter-spacing: .18em; text-transform: uppercase;
+    color: var(--accent); margin: 0 0 18px;
+  }
+  h1 {
+    font-size: clamp(34px, 5.5vw, 50px); font-weight: 600; line-height: 1.06;
+    letter-spacing: -.018em; margin: 0 0 18px; text-wrap: balance;
+  }
+  .lede { font-size: 19px; color: var(--ink-dim); margin: 0; max-width: 60ch; }
+
+  .facts {
+    display: flex; flex-wrap: wrap; gap: 0 34px;
+    margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--rule-soft);
+    font-family: "IBM Plex Mono", monospace; font-size: 12px; color: var(--ink-faint);
+    letter-spacing: .03em;
+  }
+  .facts b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  /* ---- sections ---- */
+  section { margin-top: 62px; }
+  h2 {
+    font-size: 13px; font-family: "IBM Plex Mono", monospace; font-weight: 600;
+    letter-spacing: .16em; text-transform: uppercase; color: var(--ink-faint);
+    margin: 0 0 26px; padding-bottom: 10px; border-bottom: 1px solid var(--rule);
+  }
+  h3 {
+    font-size: 22px; font-weight: 600; letter-spacing: -.01em;
+    margin: 38px 0 12px; text-wrap: balance;
+  }
+  p { margin: 0 0 16px; }
+  p:last-child { margin-bottom: 0; }
+  .dim { color: var(--ink-dim); }
+
+  /* ---- the stack diagram ---- */
+  .stack {
+    font-family: "IBM Plex Mono", monospace; font-size: 12.5px; line-height: 1.75;
+    background: var(--panel); border: 1px solid var(--rule);
+    padding: 20px 22px; overflow-x: auto; white-space: pre; color: var(--ink-dim);
+  }
+  .stack b { color: var(--ink); font-weight: 600; }
+  .stack i { color: var(--accent); font-style: normal; }
+
+  /* ---- findings ledger ---- */
+  .finding {
+    display: grid;
+    grid-template-columns: 44px 1fr;
+    gap: 0 18px;
+    padding: 24px 0;
+    border-top: 1px solid var(--rule-soft);
+  }
+  .finding:first-of-type { border-top: 1px solid var(--rule); }
+
+  .num {
+    font-family: "IBM Plex Mono", monospace; font-size: 13px; font-weight: 600;
+    font-variant-numeric: tabular-nums; color: var(--ink-faint);
+    padding-top: 5px;
+  }
+  .finding h4 {
+    font-size: 19px; font-weight: 600; margin: 0 0 4px; letter-spacing: -.008em;
+    text-wrap: balance;
+  }
+  .sev {
+    font-family: "IBM Plex Mono", monospace; font-size: 10.5px; font-weight: 600;
+    letter-spacing: .14em; text-transform: uppercase; display: block; margin-bottom: 7px;
+  }
+  .sev.crit { color: var(--crit); }
+  .sev.warn { color: var(--warn); }
+  .sev.note { color: var(--note); }
+  .finding p { font-size: 16px; margin: 0 0 12px; }
+  .where {
+    font-family: "IBM Plex Mono", monospace; font-size: 11.5px; color: var(--ink-faint);
+    margin: 0; overflow-wrap: anywhere;
+  }
+
+  /* ---- coverage table ---- */
+  .tablewrap { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 15px; }
+  th {
+    text-align: left; font-family: "IBM Plex Mono", monospace; font-size: 10.5px;
+    font-weight: 600; letter-spacing: .13em; text-transform: uppercase;
+    color: var(--ink-faint); padding: 0 14px 9px 0; border-bottom: 1px solid var(--rule);
+    white-space: nowrap;
+  }
+  td { padding: 11px 14px 11px 0; border-bottom: 1px solid var(--rule-soft); vertical-align: top; }
+  td:last-child, th:last-child { padding-right: 0; }
+  .yes { color: var(--accent); font-weight: 600; }
+  .no { color: var(--crit); font-weight: 600; }
+  .part { color: var(--warn); font-weight: 600; }
+
+  /* ---- pull quote ---- */
+  .pull {
+    border-left: 2px solid var(--accent);
+    padding: 2px 0 2px 20px;
+    margin: 26px 0;
+    font-size: 18px;
+    color: var(--ink-dim);
+  }
+  .pull strong { color: var(--ink); font-weight: 600; }
+
+  ol.next { padding-left: 0; list-style: none; counter-reset: step; margin: 0; }
+  ol.next li {
+    counter-increment: step; position: relative; padding: 14px 0 14px 42px;
+    border-bottom: 1px solid var(--rule-soft);
+  }
+  ol.next li::before {
+    content: counter(step); position: absolute; left: 0; top: 15px;
+    font-family: "IBM Plex Mono", monospace; font-size: 12px; font-weight: 600;
+    color: var(--accent);
+  }
+
+  @media (max-width: 560px) {
+    .wrap { padding: 40px 18px 70px; }
+    .finding { grid-template-columns: 1fr; gap: 0; }
+    .num { padding: 0 0 4px; }
+  }
+</style>
+
+<div class="wrap">
+  <header class="mast">
+    <p class="eyebrow">Code review · after block two</p>
+    <h1>Corvonium Block Two Review</h1>
+    <p class="lede">
+      Task view is complete against §3.4 and the derived-state architecture is holding up
+      under real code. But three of the data model's core capabilities have no interface
+      yet, and one whole section of the screen can never contain anything.
+    </p>
+    <div class="facts">
+      <span>Reviewed <b>16</b> source files</span>
+      <span><b>42</b> tests, all passing</span>
+      <span>Typecheck &amp; lint <b>clean</b></span>
+      <span><b>17</b> findings</span>
+    </div>
+  </header>
+
+  <section>
+    <h2>What exists</h2>
+
+    <p>
+      Two packages in a pnpm workspace. <code>packages/shared</code> holds the domain layer —
+      types and pure rules, no React, no RxDB, no browser. <code>apps/web</code> holds
+      everything platform-specific. The boundary is real: the shared tests run in about
+      300 ms with no DOM and no mocks, which is only possible because the logic under test
+      does not know those things exist.
+    </p>
+
+    <div class="stack">shared/     <b>types</b>  ·  <b>derive</b>  ·  <b>create</b>  ·  <b>transitions</b>  ·  <b>grouping</b>  ·  <b>filters</b>  ·  <b>ordering</b>
+              └── pure functions of (data, now). No I/O.
+
+web/db/     <b>schema/</b>   the runtime contract, checked by ajv in dev
+            <b>database</b>  lazy singleton, RxDB + Dexie + migrations
+            <b>hooks</b>     reactive queries → React
+            <b>items</b>     <i>the impure edge: the clock and the id generator</i>
+
+web/lib/    <b>useNow</b>    the one place that reads the clock
+            <b>format</b>    Intl, display only
+
+web/features/  <b>tasks/</b>  the matrix, two filter axes, drag and drop
+               <b>items/</b>  the row and the shared editor</div>
+
+    <h3>The loop nothing in the code connects</h3>
+    <p>
+      A click calls <code>addItem</code>, which writes to IndexedDB. Nothing then tells the
+      list to update — the list subscribed once, in an effect, and RxDB pushes to it. That is
+      why a second browser tab reflows without a line of code written for it, and why a sync
+      push in Phase 2 will arrive through the same path.
+    </p>
+
+    <h3>Three rules the code now encodes</h3>
+    <p>
+      <strong>Impurity lives at the edges.</strong> <code>createItem(input, now, id)</code> and
+      <code>isMissed(item, now)</code> receive time rather than reading it. The only place in
+      the item path that reaches out to the world is <code>addItem</code>.
+    </p>
+    <p>
+      <strong>Derived, never stored.</strong> There is no <code>missed</code> column, no
+      <code>urgent</code> column, no <code>priority</code>. A test asserts the design claim
+      directly: the same item, unchanged, changes matrix group as the clock advances.
+    </p>
+    <p>
+      <strong>Exactly one place reads the clock.</strong> <code>useNow</code> ticks once a
+      minute and everything receives it. The second rule is only <em>true</em> because of the
+      third — derived state computed from a frozen timestamp is stored state with extra steps.
+    </p>
+  </section>
+
+  <section>
+    <h2>Findings · bites now</h2>
+
+    <div class="finding">
+      <div class="num">01</div>
+      <div>
+        <span class="sev crit">Structural</span>
+        <h4>The Routine group can never contain anything</h4>
+        <p>
+          Routine membership is <code>rrule !== null</code>, and nothing in the interface can
+          set <code>rrule</code>. The editor has fields for title, notes, due, important and
+          project — that is all. So the first of the five matrix groups renders
+          <em>Nothing here</em> permanently, and will until recurrence ships in block five.
+        </p>
+        <p class="dim">
+          Not a bug in the code so much as a section of UI shipped ahead of the feature that
+          fills it. Worth knowing it is empty by construction, not by accident.
+        </p>
+        <p class="where">features/items/ItemForm.tsx · grouping.ts</p>
+      </div>
+    </div>
+
+    <div class="finding">
+      <div class="num">02</div>
+      <div>
+        <span class="sev crit">Structural</span>
+        <h4>There is no way to create an event</h4>
+        <p>
+          <code>kind</code> defaults to <code>'task'</code> in <code>createItem</code> and the
+          form never sets it. Every item in the database is a task.
+        </p>
+        <p>
+          Core principle §1.5 is <em>"tasks and events are the same thing"</em> — the decision
+          the whole model rests on. It is faithfully implemented in the data layer and has no
+          expression in the interface at all.
+        </p>
+        <p class="where">shared/create.ts · features/items/ItemForm.tsx</p>
+      </div>
+    </div>
+
+    <div class="finding">
+      <div class="num">03</div>
+      <div>
+        <span class="sev crit">Structural</span>
+        <h4>No timed blocks, no all-day items</h4>
+        <p>
+          <code>start</code>, <code>end</code>, <code>startDate</code>, <code>endDate</code>
+          and <code>allDay</code> are in the type, in the schema, and handled by
+          <code>isMissed</code> — but no form field writes any of them. Only <code>due</code>
+          is reachable.
+        </p>
+        <p>
+          This one has a deadline attached: the calendar in block six draws bricks from
+          <code>start</code>/<code>end</code> spans. Built today it would render an empty grid,
+          because no item can have a span.
+        </p>
+        <p class="where">features/items/ItemForm.tsx · §2.1</p>
+      </div>
+    </div>
+
+    <div class="finding">
+      <div class="num">04</div>
+      <div>
+        <span class="sev crit">Correctness</span>
+        <h4>The type and the schema disagree about <code>notes</code></h4>
+        <p>
+          <code>types.ts</code> declares <code>notes?: string</code> — optional. The RxDB schema
+          lists <code>notes</code> in <code>required</code>. TypeScript will therefore accept an
+          item the runtime validator rejects.
+        </p>
+        <p>
+          Nothing triggers it today because <code>createItem</code> always supplies a value, so
+          it sits waiting for the first code path that omits one. The fix is one character:
+          <code>notes</code> is non-optional, for the reason §6 gives — <code>""</code> already
+          means "no notes", so a second way to say the same thing is pure cost.
+        </p>
+        <p class="where">shared/types.ts:6 · db/schema/items.ts (required)</p>
+      </div>
+    </div>
+
+    <div class="finding">
+      <div class="num">05</div>
+      <div>
+        <span class="sev crit">Correctness</span>
+        <h4>Loading and failure both render as nothing</h4>
+        <p>
+          <code>{items &amp;&amp; &lt;TaskView …&gt;}</code> — when <code>items</code> is
+          <code>null</code>, nothing renders. The <em>Loading…</em> and <em>No items yet</em>
+          states were lost when <code>TaskView</code> replaced the original list.
+        </p>
+        <p>
+          <code>useItems</code> returns <code>null</code> both while opening the database and
+          forever after it fails to open, so a genuine failure is indistinguishable from a fast
+          load: a blank column and a message in the console. That is precisely the silent hang
+          the <code>.catch()</code> was added to prevent, reintroduced one layer up.
+        </p>
+        <p class="where">App.tsx · db/hooks.ts</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Findings · architecture</h2>
+
+    <div class="finding">
+      <div class="num">06</div>
+      <div>
+        <span class="sev warn">Layering</span>
+        <h4>Project writes live inside a schema file</h4>
+        <p>
+          <code>addProject</code> and <code>removeProject</code> are defined in
+          <code>db/schema/projects.ts</code>, next to the JSON Schema. Items follow the
+          intended shape — schema in <code>db/schema/items.ts</code>, writes in
+          <code>db/items.ts</code> — so the two collections are organised differently for no
+          reason.
+        </p>
+        <p>
+          It reads oddly in <code>App.tsx</code> too:
+          <code>import { addProject } from './db/schema/projects'</code>. Three more collections
+          are coming; the pattern should be settled before it is copied three times.
+        </p>
+        <p class="where">db/schema/projects.ts → should be db/projects.ts</p>
+      </div>
+    </div>
+
+    <div class="finding">
+      <div class="num">07</div>
+      <div>
+        <span class="sev note">Duplication</span>
+        <h4><code>useItems</code> and <code>useProjects</code> are the same function twice</h4>
+        <p>
+          Thirty lines each, differing only in the collection name and the type parameter.
+          Two copies is not yet evidence of the right abstraction — but subtasks, sessions and
+          settings are all coming, and a fifth copy is not a judgement call any more.
+        </p>
+        <p class="dim">
+          A single <code>useCollection(name)</code> would carry the loading contract, the
+          unsubscribe, the cancellation guard and the error handler in one place, so a fix to
+          any of them lands everywhere.
+        </p>
+        <p class="where">db/hooks.ts</p>
+      </div>
+    </div>
+
+    <div class="finding">
+      <div class="num">08</div>
+      <div>
+        <span class="sev warn">Staleness</span>
+        <h4>The edit sheet holds a snapshot, not a subscription</h4>
+        <p>
+          <code>editing</code> stores the <code>Item</code> object captured at click time and
+          never refreshes from the live query. Everything else in the app reads through a
+          subscription; the editor is the one surface that does not.
+        </p>
+        <p>
+          Harmless with one device and one tab. It becomes wrong the moment Phase 2 sync can
+          deliver a change while the sheet is open — the form would then save a draft built on
+          data the database has already moved past.
+        </p>
+        <p class="where">App.tsx (editing state)</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Findings · dead code and drift</h2>
+
+    <div class="finding">
+      <div class="num">09</div>
+      <div>
+        <span class="sev note">Dead code</span>
+        <h4><code>keyForReorder</code> is exported, tested, and never called</h4>
+        <p>
+          It was written for the button-based ordering; <code>moveItem</code> now uses
+          <code>keyAtIndex</code> directly. Four passing tests guard a function nothing uses,
+          which is worse than no tests — it reads as coverage.
+        </p>
+        <p class="where">shared/ordering.ts</p>
+      </div>
+    </div>
+
+    <div class="finding">
+      <div class="num">10</div>
+      <div>
+        <span class="sev warn">Missing</span>
+        <h4>Projects can be created but never deleted</h4>
+        <p>
+          <code>removeProject</code> exists with no caller. The temporary project box in
+          <code>App.tsx</code> lists projects but offers no way to remove one — so a typo in a
+          project name is permanent until Settings exists.
+        </p>
+        <p class="dim">
+          The same class of one-way door as completing an item before the Done filter existed,
+          and cancelling one before the sheet had a Cancel button.
+        </p>
+        <p class="where">db/schema/projects.ts · App.tsx</p>
+      </div>
+    </div>
+
+    <div class="finding">
+      <div class="num">11</div>
+      <div>
+        <span class="sev note">Drift</span>
+        <h4><code>NewItem</code> still omits a field that no longer exists</h4>
+        <p>
+          <code>Omit&lt;Item, 'id' | 'createdAt' | 'updatedAt' | 'deleted'&gt;</code> — but
+          <code>deleted</code> was removed when RxDB rejected it as a reserved name.
+          TypeScript permits omitting a key that is not there, so it is silent, and it is a
+          false trail for whoever reads it next.
+        </p>
+        <p class="where">shared/create.ts:3</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Findings · specification gaps</h2>
+
+    <div class="finding">
+      <div class="num">12</div>
+      <div>
+        <span class="sev warn">Behaviour</span>
+        <h4>All-day items are invisible to urgency and to "This week"</h4>
+        <p>
+          Both <code>isUrgent</code> and the <code>this-week</code> filter begin with
+          <code>due !== null</code>. An all-day item carries <code>startDate</code>, not
+          <code>due</code>, so it is never urgent and never appears under <em>This week</em>.
+        </p>
+        <p>
+          For urgency this matches §3.4 exactly — <em>"an item with no due date is never
+          urgent"</em>. For the filter it is harder to defend: a filter named after a span of
+          time silently omits items that fall inside it. <code>isMissed</code> already handles
+          the all-day case; these two do not.
+        </p>
+        <p class="where">shared/derive.ts · shared/filters.ts</p>
+      </div>
+    </div>
+
+    <div class="finding">
+      <div class="num">13</div>
+      <div>
+        <span class="sev note">Deferred</span>
+        <h4><code>urgentWithinDays</code> is a constant in a component</h4>
+        <p>
+          Hard-coded as <code>2</code> in <code>TaskView.tsx</code> with a comment, because the
+          settings document has no UI. Correct for now; it needs to move when Settings lands,
+          and it is the only tunable in the app that currently cannot be tuned.
+        </p>
+        <p class="where">features/tasks/TaskView.tsx:34</p>
+      </div>
+    </div>
+
+    <div class="finding">
+      <div class="num">14</div>
+      <div>
+        <span class="sev note">Behaviour</span>
+        <h4>Deleting a project leaves items pointing at it</h4>
+        <p>
+          Nothing clears <code>projectId</code> on the affected items. The colour dot simply
+          stops rendering, because the lookup returns <code>undefined</code> — so it degrades
+          quietly rather than breaking. The project filter already self-heals for the same
+          reason.
+        </p>
+        <p class="dim">
+          Arguably correct for an offline-first app: a hard cascade would be a multi-document
+          write racing against sync. Worth deciding deliberately rather than discovering later.
+        </p>
+        <p class="where">db/schema/projects.ts</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Findings · scale and testing</h2>
+
+    <div class="finding">
+      <div class="num">15</div>
+      <div>
+        <span class="sev note">Scale</span>
+        <h4>Every insert reads the entire collection</h4>
+        <p>
+          <code>addItem</code> calls <code>db.items.find().exec()</code> to compute
+          <code>keyAtTop</code>. That is every item, loaded and mapped, on every add.
+        </p>
+        <p>
+          Invisible at a few hundred items and worth knowing about at a few thousand. A sorted
+          query limited to one row would give the same answer — the minimum key is all it needs.
+        </p>
+        <p class="where">db/items.ts (addItem)</p>
+      </div>
+    </div>
+
+    <div class="finding">
+      <div class="num">16</div>
+      <div>
+        <span class="sev warn">Coverage</span>
+        <h4><code>apps/web</code> has no test runner</h4>
+        <p>
+          All 42 tests live in <code>packages/shared</code>. Nothing covers
+          <code>resolveDrop</code> — the function deciding where a dragged item lands and
+          whether a drop is legal at all — nor any component.
+        </p>
+        <p>
+          This is also why <code>grouping.ts</code> and <code>filters.ts</code> sit in
+          <code>shared</code> despite the server having no use for them: it was the only place
+          they would be tested. Tooling shaped the architecture, which is worth naming.
+        </p>
+        <p class="where">apps/web (no vitest) · features/tasks/TaskView.tsx</p>
+      </div>
+    </div>
+
+    <div class="finding">
+      <div class="num">17</div>
+      <div>
+        <span class="sev note">Coverage</span>
+        <h4>No all-day cases in the filter tests</h4>
+        <p>
+          <code>isMissed</code> has three all-day tests, added by writing a failing one first.
+          <code>matchesTimeFilter</code> has none — which is how finding 12 stayed invisible.
+        </p>
+        <p class="where">shared/filters.test.ts</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>§3.4 coverage</h2>
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr><th>Requirement</th><th>State</th><th>Note</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Five groups, fixed order, whatever the filter</td><td class="yes">Built</td><td class="dim">Routine always empty — 01</td></tr>
+          <tr><td>Routine derived from <code>rrule</code>, exclusive</td><td class="yes">Built</td><td class="dim">Unreachable in the UI</td></tr>
+          <tr><td>Urgency derived; only <code>important</code> stored</td><td class="yes">Built</td><td class="dim">Asserted by test</td></tr>
+          <tr><td>New items default to <code>important: false</code></td><td class="yes">Built</td><td class="dim">—</td></tr>
+          <tr><td>Circle completes and nothing else</td><td class="yes">Built</td><td class="dim">—</td></tr>
+          <tr><td>Title, due sub-line, tap elsewhere opens the sheet</td><td class="yes">Built</td><td class="dim">—</td></tr>
+          <tr><td>Two filter rows, independent, combining</td><td class="yes">Built</td><td class="dim">All-day gap — 12</td></tr>
+          <tr><td>Completed items only under Done</td><td class="yes">Built</td><td class="dim">Done also covers cancelled</td></tr>
+          <tr><td>Manual ordering, fractional <code>sortOrder</code></td><td class="yes">Built</td><td class="dim">Drag, plus cross-group re-triage</td></tr>
+          <tr><td>New items enter at the top</td><td class="yes">Built</td><td class="dim">O(n) per insert — 15</td></tr>
+          <tr><td>Sheet holds subtasks and recurrence</td><td class="no">Missing</td><td class="dim">Neither is scheduled before block 5</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="pull">
+      <strong>Subtasks appear in none of the eight blocks.</strong> §2.3 specifies them as
+      their own collection so concurrent ticks on two devices merge instead of clobbering —
+      a third collection, its own hooks, and a checklist in the sheet. They were left out of
+      the plan by mistake, not by decision.
+    </p>
+  </section>
+
+  <section>
+    <h2>What I would fix first</h2>
+    <ol class="next">
+      <li><strong>Restore the loading and error states.</strong> Ten minutes, and it stops the next database problem from presenting as a blank screen. <span class="dim">— 05</span></li>
+      <li><strong>Make <code>notes</code> non-optional and drop the stale <code>'deleted'</code> omit.</strong> Two characters; closes a type-versus-runtime disagreement before something walks into it. <span class="dim">— 04, 11</span></li>
+      <li><strong>Move project writes to <code>db/projects.ts</code> and add deletion.</strong> Settles the collection pattern before three more copy it. <span class="dim">— 06, 10</span></li>
+      <li><strong>Extend the item form: kind, all-day, start and end.</strong> The largest gap and the one with a deadline — the calendar cannot be built against a model no item can populate. <span class="dim">— 02, 03</span></li>
+      <li><strong>Add Vitest to <code>apps/web</code> and test <code>resolveDrop</code>.</strong> The drag logic is the most intricate code in the app and the only significant piece with no coverage. <span class="dim">— 16</span></li>
+    </ol>
+    <p style="margin-top:26px" class="dim">
+      Findings 07, 08, 09, 12, 13, 14 and 17 are real but not urgent. Two of them —
+      the duplicated hooks and the stale editor snapshot — become materially worse in Phase 2
+      rather than now, which is the right time to revisit them.
+    </p>
+  </section>
+</div>
