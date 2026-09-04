@@ -22,14 +22,7 @@ type Props = {
 
 const field = 'w-full rounded-lg bg-[#1C241E] border border-[#28322B] px-3 py-2 text-[#E8EFE9]';
 
-export function ItemForm({
-  initial,
-  projects,
-  onSubmit,
-  onClose,
-  onSetStatus,
-  onDelete,
-}: Props) {
+export function ItemForm({ initial, projects, onSubmit, onClose, onSetStatus, onDelete }: Props) {
   const [title, setTitle] = useState(initial?.title ?? '');
   const [notes, setNotes] = useState(initial?.notes ?? '');
   const [due, setDue] = useState(initial?.due != null ? toDateTimeLocal(initial.due) : '');

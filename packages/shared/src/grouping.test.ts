@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createItem } from './create';
-import { matrixGroup } from './grouping';
+import { dropTargets, importantForGroup, matrixGroup } from './grouping';
 import type { Item } from './types';
 
 const NOW = Date.UTC(2026, 7, 15, 12, 0);
@@ -26,5 +26,39 @@ describe('matrixGroup', () => {
     const item = make({ important: true, due: NOW + 10 * DAY });
     expect(matrixGroup(item, NOW, 2)).toBe('important');
     expect(matrixGroup(item, NOW + 9 * DAY, 2)).toBe('urgent-important');
+  });
+});
+
+describe('dropTargets', () => {
+  it('confines a recurring item to Routine — drag cannot invent an rrule', () => {
+    expect(dropTargets(make({ rrule: 'FREQ=DAILY' }), NOW, 2)).toEqual(['routine']);
+  });
+
+  it('offers an urgent item only the two urgent groups', () => {
+    const targets = dropTargets(make({ due: NOW + DAY }), NOW, 2);
+    expect(new Set(targets)).toEqual(new Set(['urgent-important', 'urgent']));
+  });
+
+  it('offers an undated item the two non-urgent groups', () => {
+    const targets = dropTargets(make({}), NOW, 2);
+    expect(new Set(targets)).toEqual(new Set(['important', 'neither']));
+  });
+
+  it('always includes the group the item is already in', () => {
+    const item = make({ important: true, due: NOW + DAY });
+    expect(dropTargets(item, NOW, 2)).toContain(matrixGroup(item, NOW, 2));
+  });
+});
+
+describe('importantForGroup', () => {
+  it('maps each quadrant to the flag it requires', () => {
+    expect(importantForGroup('urgent-important')).toBe(true);
+    expect(importantForGroup('important')).toBe(true);
+    expect(importantForGroup('urgent')).toBe(false);
+    expect(importantForGroup('neither')).toBe(false);
+  });
+
+  it('returns null for Routine, which drag cannot set', () => {
+    expect(importantForGroup('routine')).toBeNull();
   });
 });

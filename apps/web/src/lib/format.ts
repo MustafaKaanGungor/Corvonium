@@ -14,10 +14,11 @@ export const formatDate = (ms: number) => dmy.format(ms);
 export const formatDayLabel = (ms: number) => dayLabel.format(ms);
 export const formatTime = (ms: number) => hhmm.format(ms);
 
+const pad = (n: number) => String(n).padStart(2, '0');
+
 /** Epoch ms → the string `<input type="datetime-local">` expects, in local time. */
 export function toDateTimeLocal(ms: number): string {
   const d = new Date(ms);
-  const pad = (n: number) => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 

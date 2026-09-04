@@ -16,9 +16,7 @@ function Chip({ active, color, onClick, children }: ChipProps) {
         active ? 'border-[#4CC26A] text-[#E8EFE9]' : 'border-[#28322B] text-[#8A9990]'
       }`}
     >
-      {color && (
-        <span className="h-[7px] w-[7px] rounded-full" style={{ background: color }} />
-      )}
+      {color && <span className="h-[7px] w-[7px] rounded-full" style={{ background: color }} />}
       {children}
     </button>
   );
