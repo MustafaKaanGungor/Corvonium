@@ -19,3 +19,30 @@ select,
 textarea {
   font-size: 16px;
 }
+
+/*
+ * The desktop side panel slides in from the right edge.
+ *
+ * `showModal()` toggles `display`, so a plain transition has nothing to animate
+ * from — hence `@starting-style`, which gives the open state one frame at
+ * `translateX` before it settles. No JS, no timers.
+ *
+ * Entry only, deliberately. Animating the *exit* needs `display`/`overlay` with
+ * `allow-discrete`, which keeps the dialog in the top layer until the animation
+ * ends — and `showModal()` throws `InvalidStateError` on a dialog that is already
+ * there. Close and reopen a sheet inside those 250ms and it never opens again.
+ * An instant dismiss is a fair price for a panel that always opens.
+ *
+ * Below `md` the sheet comes up from the bottom and is left alone.
+ */
+@media (min-width: 768px) {
+  dialog {
+    transition: transform 0.25s cubic-bezier(0.3, 0.9, 0.4, 1);
+  }
+
+  @starting-style {
+    dialog[open] {
+      transform: translateX(102%);
+    }
+  }
+}

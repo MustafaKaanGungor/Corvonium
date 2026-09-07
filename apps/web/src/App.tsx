@@ -28,15 +28,29 @@ export default function App() {
   const now = useNow();
 
   const [adding, setAdding] = useState(false);
-  const [editing, setEditing] = useState<Item | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+
+  /*
+    An id, not an `Item`. Holding the object would hold a *snapshot* taken when the
+    row was clicked: if the item is removed while its editor is open, saving would
+    write that stale object back and resurrect a deleted row. Looking it up in the
+    live array each render means `editing` goes null instead and the sheet closes.
+
+    This does not re-seed an open form from a live change — `ItemForm` seeds its
+    state from `initial` and is keyed by id, so fields never move under the cursor
+    mid-edit. That is deliberate.
+  */
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const editing = editingId === null ? null : (items?.find((i) => i.id === editingId) ?? null);
 
   const itemSheetOpen = adding || editing !== null;
 
   function closeItemSheet() {
     setAdding(false);
-    setEditing(null);
+    setEditingId(null);
   }
+
+  const openItem = (item: Item) => setEditingId(item.id);
 
   const showsList = screen === 'today' || screen === 'tasks';
 
@@ -67,7 +81,7 @@ export default function App() {
             items={items ?? []}
             projects={projects ?? []}
             now={now}
-            onOpen={setEditing}
+            onOpen={openItem}
             onOpenSettings={() => setSettingsOpen(true)}
           />
         ) : screen === 'tasks' ? (
@@ -76,7 +90,7 @@ export default function App() {
             projects={projects ?? []}
             now={now}
             params={params}
-            onOpen={setEditing}
+            onOpen={openItem}
           />
         ) : screen === 'calendar' ? (
           <Placeholder

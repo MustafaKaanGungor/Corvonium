@@ -11,6 +11,14 @@ export type RowProps = {
 
 export const ROW_SHELL = 'flex items-start gap-3 rounded-lg bg-[#141A16] px-3 py-2.5';
 
+/**
+ * The same shell, lifted and given a left accent. Used where a row is not just
+ * clicked but *selected* — wide Today, where the row and the detail pane beside it
+ * have to read as one thing.
+ */
+const ROW_SHELL_SELECTED =
+  'flex items-start gap-3 rounded-lg bg-[#1C241E] px-3 py-2.5 shadow-[inset_2px_0_0_#4CC26A]';
+
 /** A row's contents, with no drag wiring. Shared by every list that shows items. */
 export function RowBody({ item, now, project, onOpen }: RowProps) {
   const done = item.status === 'done';
@@ -81,9 +89,9 @@ export function RowBody({ item, now, project, onOpen }: RowProps) {
  * A row outside any `SortableContext` — used by Today, where there is no drag,
  * and by the drag overlay, which renders outside the context by design.
  */
-export function ItemRowStatic(props: RowProps) {
+export function ItemRowStatic({ selected = false, ...props }: RowProps & { selected?: boolean }) {
   return (
-    <li className={ROW_SHELL}>
+    <li className={selected ? ROW_SHELL_SELECTED : ROW_SHELL}>
       <RowBody {...props} />
     </li>
   );

@@ -30,3 +30,10 @@ export function useMediaQuery(query: string): boolean {
 
 /** The shell breakpoint — matches Tailwind's `md:`. */
 export const DESKTOP = '(min-width: 768px)';
+
+/**
+ * Where Today gains its detail column. Deliberately wider than `DESKTOP`: a 340px
+ * pane takes 44% of a 768px screen, which would leave the list narrower than it is
+ * on a phone.
+ */
+export const WIDE = '(min-width: 1024px)';
