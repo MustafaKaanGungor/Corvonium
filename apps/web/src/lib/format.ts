@@ -9,10 +9,31 @@ const dayLabel = new Intl.DateTimeFormat(LOCALE, {
   month: 'long',
 });
 const hhmm = new Intl.DateTimeFormat(LOCALE, { hour: '2-digit', minute: '2-digit' });
+const relative = new Intl.RelativeTimeFormat(LOCALE, { numeric: 'auto' });
 
 export const formatDate = (ms: number) => dmy.format(ms);
 export const formatDayLabel = (ms: number) => dayLabel.format(ms);
 export const formatTime = (ms: number) => hhmm.format(ms);
+
+function startOfDay(t: number): number {
+  const d = new Date(t);
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
+}
+
+/**
+ * How late something is, in words: 'yesterday', '3 days ago', 'last week'.
+ *
+ * Counts whole *calendar days* between the two instants, not elapsed hours, so
+ * something due at 23:00 last night reads as "yesterday" rather than "today".
+ * `numeric: 'auto'` is what produces the words rather than "1 day ago".
+ */
+export function formatRelativeDay(ms: number, now: number): string {
+  const days = Math.round((startOfDay(ms) - startOfDay(now)) / 86_400_000);
+
+  if (Math.abs(days) >= 7) return relative.format(Math.round(days / 7), 'week');
+  return relative.format(days, 'day');
+}
 
 const pad = (n: number) => String(n).padStart(2, '0');
 

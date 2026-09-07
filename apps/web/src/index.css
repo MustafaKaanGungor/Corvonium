@@ -1,1 +1,21 @@
 @import 'tailwindcss';
+
+/*
+ * The interface was drawn at a 14px base (design/corvonium-screens.html), where a
+ * row title is 14px and a group header 10px. Tailwind sizes in rem, so setting the
+ * root here scales the whole design — type and spacing together — to match the
+ * prototype instead of rendering ~15% oversized against the browser default.
+ */
+html {
+  font-size: 14px;
+}
+
+/*
+ * …except form controls, which stay at 16px. iOS Safari zooms the page when you
+ * focus an input smaller than that, and never zooms back out.
+ */
+input,
+select,
+textarea {
+  font-size: 16px;
+}

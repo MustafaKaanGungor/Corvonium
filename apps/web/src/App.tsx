@@ -1,122 +1,115 @@
 import { useState } from 'react';
-import type { Item, TimeFilter } from '@corvonium/shared';
+import type { Item } from '@corvonium/shared';
 import { useItems, useProjects } from './db/hooks';
 import { addItem, editItem, removeItem, setStatus } from './db/items';
-import { addProject } from './db/projects';
 import { useNow } from './lib/useNow';
-import { formatDayLabel } from './lib/format';
+import { useRoute } from './lib/router';
+import { NavBar } from './components/NavBar';
+import { TopBar } from './components/TopBar';
 import { Sheet } from './components/Sheet';
 import { ItemForm } from './features/items/ItemForm';
-import { FilterRow } from './features/tasks/FilterRow';
-import { ProjectFilter } from './features/tasks/ProjectFilter';
-import { TaskView } from './features/tasks/TaskView';
+import { SettingsSheet } from './features/settings/SettingsSheet';
+import { TasksScreen } from './features/tasks/TasksScreen';
+import { TodayView } from './features/today/TodayView';
+
+function Placeholder({ title, detail }: { title: string; detail: string }) {
+  return (
+    <div className="flex h-full flex-col items-center justify-center gap-2 px-8 text-center">
+      <h1 className="text-xl font-bold tracking-tight">{title}</h1>
+      <p className="max-w-[34ch] text-sm text-[#5F6E66]">{detail}</p>
+    </div>
+  );
+}
 
 export default function App() {
+  const { screen, params } = useRoute();
   const { data: items, error: itemsError } = useItems();
   const { data: projects } = useProjects();
   const now = useNow();
 
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<Item | null>(null);
-  const [filter, setFilter] = useState<TimeFilter>('all');
-  const [projectFilter, setProjectFilter] = useState<string | null>(null);
-  const [newProject, setNewProject] = useState('');
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
-  const sheetOpen = adding || editing !== null;
+  const itemSheetOpen = adding || editing !== null;
 
-  // Self-healing: if the filtered project is deleted, fall back to "all"
-  // rather than filtering by an id that no longer matches anything.
-  const activeProject =
-    projectFilter && projects?.some((p) => p.id === projectFilter) ? projectFilter : null;
-
-  function close() {
+  function closeItemSheet() {
     setAdding(false);
     setEditing(null);
   }
 
-  function submitProject() {
-    const name = newProject.trim();
-    if (!name) return;
-    addProject(name);
-    setNewProject('');
-  }
+  const showsList = screen === 'today' || screen === 'tasks';
 
   return (
-    <div className="min-h-dvh bg-[#0A0E0C] p-6 text-[#E8EFE9]">
-      <header className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight">
-          Corvo<span className="text-[#4CC26A]">nium</span>
-        </h1>
-        <p className="text-sm text-[#8A9990]">{formatDayLabel(now)}</p>
-      </header>
+    <div className="flex h-dvh flex-col bg-[#0A0E0C] text-[#E8EFE9]">
+      <TopBar
+        current={screen}
+        onAdd={() => setAdding(true)}
+        onOpenSettings={() => setSettingsOpen(true)}
+      />
 
-      <button
-        onClick={() => setAdding(true)}
-        className="rounded-lg bg-[#4CC26A] px-4 py-2 font-semibold text-[#06210F]"
-      >
-        Add item
-      </button>
-
-      {/* Temporary. Projects move into Settings — plan §3.1. */}
-      <section className="mt-4 rounded-lg border border-[#28322B] p-3">
-        <div className="flex gap-2">
-          <input
-            className="min-w-0 flex-1 rounded-lg border border-[#28322B] bg-[#1C241E] px-3 py-2 text-sm"
-            placeholder="New project"
-            value={newProject}
-            onChange={(e) => setNewProject(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && submitProject()}
+      {/* Each screen owns its width: the 2x2 needs more room than a list does. */}
+      <main className="min-h-0 w-full flex-1">
+        {itemsError !== null ? (
+          <div className="p-5">
+            <p className="rounded-lg border border-[#D9614F]/40 bg-[#D9614F]/10 p-4 text-sm text-[#D9614F]">
+              Could not open your data: {itemsError}
+              <br />
+              <span className="text-[#8A9990]">
+                Your items are safe on this device. Try reloading.
+              </span>
+            </p>
+          </div>
+        ) : showsList && items === null ? (
+          <p className="p-5 text-sm text-[#5F6E66]">Loading&hellip;</p>
+        ) : screen === 'today' ? (
+          <TodayView
+            items={items ?? []}
+            projects={projects ?? []}
+            now={now}
+            onOpen={setEditing}
+            onOpenSettings={() => setSettingsOpen(true)}
           />
-          <button onClick={submitProject} className="rounded-lg bg-[#1C241E] px-3 py-2 text-sm">
-            Add
-          </button>
-        </div>
-
-        {projects && projects.length > 0 && (
-          <ul className="mt-3 flex flex-wrap gap-2">
-            {projects.map((p) => (
-              <li
-                key={p.id}
-                className="flex items-center gap-2 rounded-full border border-[#28322B] px-3 py-1 text-xs text-[#8A9990]"
-              >
-                <span className="h-[7px] w-[7px] rounded-full" style={{ background: p.color }} />
-                {p.name}
-              </li>
-            ))}
-          </ul>
+        ) : screen === 'tasks' ? (
+          <TasksScreen
+            items={items ?? []}
+            projects={projects ?? []}
+            now={now}
+            params={params}
+            onOpen={setEditing}
+          />
+        ) : screen === 'calendar' ? (
+          <Placeholder
+            title="Calendar"
+            detail="The month grid, Plan and Effort modes. Block 6 — it needs the recurrence and lane-assignment engines first."
+          />
+        ) : (
+          <Placeholder
+            title="Stats"
+            detail="Where your time went, aggregated from work sessions. Block 4, once Work Mode is recording them."
+          />
         )}
-      </section>
+      </main>
 
-      <div className="my-4 space-y-2">
-        <FilterRow value={filter} onChange={setFilter} />
-        <ProjectFilter
-          projects={projects ?? []}
-          value={activeProject}
-          onChange={setProjectFilter}
-        />
-      </div>
-
-      {itemsError !== null ? (
-        <p className="rounded-lg border border-[#D9614F]/40 bg-[#D9614F]/10 p-4 text-sm text-[#D9614F]">
-          Could not open your data: {itemsError}
-          <br />
-          <span className="text-[#8A9990]">Your items are safe on this device. Try reloading.</span>
-        </p>
-      ) : items === null ? (
-        <p className="p-4 text-sm text-[#5F6E66]">Loading&hellip;</p>
-      ) : (
-        <TaskView
-          items={items}
-          projects={projects ?? []}
-          now={now}
-          filter={filter}
-          projectFilter={activeProject}
-          onOpen={setEditing}
-        />
+      {/*
+        Tasks only. Today's primary action is Start the Day (§3.3) and a floating
+        button there lands on top of it; the calendar gets one when it is built.
+      */}
+      {screen === 'tasks' && itemsError === null && (
+        <button
+          onClick={() => setAdding(true)}
+          aria-label="Add item"
+          // Inset from the edge: Android reads a back-swipe from both screen sides.
+          className="absolute right-5 bottom-[74px] grid h-13 w-13 md:hidden place-items-center rounded-full bg-[#4CC26A] pb-0.5 text-2xl text-[#06210F] shadow-lg shadow-[#4CC26A]/30"
+        >
+          +
+        </button>
       )}
 
-      <Sheet open={sheetOpen} onClose={close}>
-        {sheetOpen && (
+      <NavBar current={screen} />
+
+      <Sheet open={itemSheetOpen} onClose={closeItemSheet}>
+        {itemSheetOpen && (
           <ItemForm
             key={editing?.id ?? 'new'}
             initial={editing ?? undefined}
@@ -124,20 +117,26 @@ export default function App() {
             onSubmit={(draft) => {
               if (editing) editItem(editing.id, draft);
               else addItem(draft);
-              close();
+              closeItemSheet();
             }}
-            onClose={close}
+            onClose={closeItemSheet}
             onSetStatus={(status) => {
               if (!editing) return;
               setStatus(editing.id, status);
-              close();
+              closeItemSheet();
             }}
             onDelete={() => {
               if (!editing) return;
               removeItem(editing.id);
-              close();
+              closeItemSheet();
             }}
           />
+        )}
+      </Sheet>
+
+      <Sheet open={settingsOpen} onClose={() => setSettingsOpen(false)}>
+        {settingsOpen && (
+          <SettingsSheet projects={projects ?? []} onClose={() => setSettingsOpen(false)} />
         )}
       </Sheet>
     </div>
