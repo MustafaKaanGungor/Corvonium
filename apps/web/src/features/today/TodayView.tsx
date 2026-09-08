@@ -1,7 +1,16 @@
 import { useState } from 'react';
-import { todayGroup, type Item, type Project, type TodayGroup } from '@corvonium/shared';
+import {
+  sessionTotals,
+  todayGroup,
+  type Item,
+  type Project,
+  type Session,
+  type TodayGroup,
+} from '@corvonium/shared';
 import { ItemRowStatic } from '../items/ItemRowStatic';
-import { href } from '../../lib/router';
+import { startSession } from '../../db/sessions';
+import { formatDuration } from '../../lib/format';
+import { href, navigate } from '../../lib/router';
 import { useMediaQuery, WIDE } from '../../lib/useMediaQuery';
 import { ItemDetail } from './ItemDetail';
 
@@ -20,11 +29,12 @@ type Props = {
   items: Item[];
   projects: Project[];
   now: number;
+  liveSession: Session | null;
   onOpen: (item: Item) => void;
   onOpenSettings: () => void;
 };
 
-export function TodayView({ items, projects, now, onOpen, onOpenSettings }: Props) {
+export function TodayView({ items, projects, now, liveSession, onOpen, onOpenSettings }: Props) {
   const wide = useMediaQuery(WIDE);
 
   // View state, in-memory and resetting on a cold start — §3.1. Only ever read
@@ -43,6 +53,17 @@ export function TodayView({ items, projects, now, onOpen, onOpenSettings }: Prop
   // the selection can only ever be something actually on screen.
   const visible = grouped.flatMap((group) => group.items.slice(0, CAP));
   const selected = visible.find((item) => item.id === selectedId) ?? visible[0] ?? null;
+
+  /*
+    One button, two jobs. There is no top bar on a phone, so this is the only way
+    back to a session in progress — hence "Resume" rather than a second control.
+    `startSession` resumes an existing live session rather than opening a second,
+    so pressing it twice cannot double-count the same minutes.
+  */
+  async function startOrResume(itemIds: string[] = []) {
+    if (liveSession === null) await startSession(Date.now(), itemIds);
+    navigate('work');
+  }
 
   const list =
     grouped.length === 0 ? (
@@ -118,7 +139,9 @@ export function TodayView({ items, projects, now, onOpen, onOpenSettings }: Prop
               item={selected}
               now={now}
               project={projects.find((p) => p.id === selected?.projectId)}
+              liveSession={liveSession}
               onEdit={() => selected && onOpen(selected)}
+              onStart={() => void startOrResume(selected === null ? [] : [selected.id])}
             />
           </div>
         </div>
@@ -129,14 +152,13 @@ export function TodayView({ items, projects, now, onOpen, onOpenSettings }: Prop
 
           <div className="shrink-0 px-5 pt-2 pb-3">
             <button
-              disabled
-              className="w-full rounded-xl bg-[#4CC26A] py-4 font-semibold text-[#06210F] disabled:opacity-30"
+              onClick={() => void startOrResume()}
+              className="w-full rounded-xl bg-[#4CC26A] py-4 font-semibold text-[#06210F]"
             >
-              ▶ Start the Day
+              {liveSession === null
+                ? '▶ Start the Day'
+                : `Resume session · ${formatDuration(sessionTotals(liveSession, now).total)}`}
             </button>
-            <p className="mt-1.5 text-center text-[11px] text-[#5F6E66]">
-              Work Mode arrives in the next block.
-            </p>
           </div>
         </>
       )}

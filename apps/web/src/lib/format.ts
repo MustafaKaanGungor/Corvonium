@@ -49,3 +49,34 @@ export function fromDateTimeLocal(value: string): number | null {
   const ms = new Date(value).getTime();
   return Number.isNaN(ms) ? null : ms;
 }
+
+/**
+ * Elapsed milliseconds as `01:47:12`, or `47:12` under an hour.
+ *
+ * Dropping the hour slot keeps the big timer from reading `00:` for most of a
+ * session; `hours` forces it back on where columns have to line up.
+ */
+export function formatDuration(ms: number, hours: 'auto' | 'always' = 'auto'): string {
+  const total = Math.max(0, Math.floor(ms / 1000));
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+
+  if (h === 0 && hours === 'auto') return `${pad(m)}:${pad(s)}`;
+  return `${pad(h)}:${pad(m)}:${pad(s)}`;
+}
+
+/**
+ * The same, coarse: `1h 47m` / `47m` / `48s`. For summaries, where seconds are
+ * noise — until the whole span is under a minute, where flooring to `0m` reads as
+ * a broken clock rather than a short session.
+ */
+export function formatSpan(ms: number): string {
+  const seconds = Math.max(0, Math.floor(ms / 1000));
+  if (seconds < 60) return `${seconds}s`;
+
+  const total = Math.floor(seconds / 60);
+  const h = Math.floor(total / 60);
+  const m = total % 60;
+  return h === 0 ? `${m}m` : `${h}h ${m}m`;
+}

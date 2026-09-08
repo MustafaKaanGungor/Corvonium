@@ -1,8 +1,11 @@
 import { useSyncExternalStore } from 'react';
 
-export type Screen = 'today' | 'tasks' | 'calendar' | 'stats';
+export type Screen = 'today' | 'tasks' | 'calendar' | 'stats' | 'work';
 
-const SCREENS: Screen[] = ['today', 'tasks', 'calendar', 'stats'];
+const SCREENS: Screen[] = ['today', 'tasks', 'calendar', 'stats', 'work'];
+
+// 'work' is routable but not a destination: it is somewhere you are sent, not a
+// tab you browse to. `DESTINATIONS` in NavBar.tsx is the list the two bars render.
 
 /** Today is the default landing screen — plan §3.1. */
 const DEFAULT: Screen = 'today';

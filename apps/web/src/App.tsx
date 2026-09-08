@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { Item } from '@corvonium/shared';
-import { useItems, useProjects } from './db/hooks';
+import { useItems, useProjects, useSessions } from './db/hooks';
 import { addItem, editItem, removeItem, setStatus } from './db/items';
 import { useNow } from './lib/useNow';
 import { useRoute } from './lib/router';
@@ -11,6 +11,7 @@ import { ItemForm } from './features/items/ItemForm';
 import { SettingsSheet } from './features/settings/SettingsSheet';
 import { TasksScreen } from './features/tasks/TasksScreen';
 import { TodayView } from './features/today/TodayView';
+import { WorkScreen } from './features/work/WorkScreen';
 
 function Placeholder({ title, detail }: { title: string; detail: string }) {
   return (
@@ -25,6 +26,7 @@ export default function App() {
   const { screen, params } = useRoute();
   const { data: items, error: itemsError } = useItems();
   const { data: projects } = useProjects();
+  const { data: sessions } = useSessions();
   const now = useNow();
 
   const [adding, setAdding] = useState(false);
@@ -52,12 +54,16 @@ export default function App() {
 
   const openItem = (item: Item) => setEditingId(item.id);
 
-  const showsList = screen === 'today' || screen === 'tasks';
+  const showsList = screen === 'today' || screen === 'tasks' || screen === 'work';
+
+  const liveSession = sessions?.find((s) => s.endedAt === null) ?? null;
 
   return (
     <div className="flex h-dvh flex-col bg-[#0A0E0C] text-[#E8EFE9]">
       <TopBar
         current={screen}
+        liveSession={liveSession}
+        now={now}
         onAdd={() => setAdding(true)}
         onOpenSettings={() => setSettingsOpen(true)}
       />
@@ -81,6 +87,7 @@ export default function App() {
             items={items ?? []}
             projects={projects ?? []}
             now={now}
+            liveSession={liveSession}
             onOpen={openItem}
             onOpenSettings={() => setSettingsOpen(true)}
           />
@@ -92,6 +99,8 @@ export default function App() {
             params={params}
             onOpen={openItem}
           />
+        ) : screen === 'work' ? (
+          <WorkScreen sessions={sessions ?? []} items={items ?? []} projects={projects ?? []} />
         ) : screen === 'calendar' ? (
           <Placeholder
             title="Calendar"
@@ -100,7 +109,7 @@ export default function App() {
         ) : (
           <Placeholder
             title="Stats"
-            detail="Where your time went, aggregated from work sessions. Block 4, once Work Mode is recording them."
+            detail="Where your time went, aggregated from work sessions. The next block — Work Mode is recording them now."
           />
         )}
       </main>

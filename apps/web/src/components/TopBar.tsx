@@ -1,8 +1,12 @@
+import { sessionTotals, type Session } from '@corvonium/shared';
+import { formatDuration } from '../lib/format';
 import { href, type Screen } from '../lib/router';
 import { DESTINATIONS } from './NavBar';
 
 type Props = {
   current: Screen;
+  liveSession: Session | null;
+  now: number;
   onAdd: () => void;
   onOpenSettings: () => void;
 };
@@ -13,7 +17,7 @@ type Props = {
  * Carries the three global actions that live in per-screen chrome on a phone:
  * navigation, adding an item, and settings.
  */
-export function TopBar({ current, onAdd, onOpenSettings }: Props) {
+export function TopBar({ current, liveSession, now, onAdd, onOpenSettings }: Props) {
   return (
     <header className="hidden h-13 shrink-0 items-center gap-6 border-b border-[#28322B] bg-[#141A16] px-[22px] md:flex">
       <span className="text-[15px] font-bold tracking-[-0.01em]">
@@ -39,13 +43,25 @@ export function TopBar({ current, onAdd, onOpenSettings }: Props) {
 
       <div className="flex shrink-0 items-center gap-3">
         {/*
-          "Local only", not "Synced". There is no server until Phase 2, and a green
-          tick claiming otherwise would misrepresent where the data actually is.
+          A running session takes this slot: it is the one thing happening *now*,
+          and Work Mode is not a tab you can navigate back to from the nav above.
+          Otherwise "Local only", not "Synced" — there is no server until Phase 2,
+          and a green tick claiming otherwise would misrepresent where the data is.
         */}
-        <span className="flex items-center gap-1.5 text-[11.5px] text-[#8A9990]">
-          <span className="block h-[7px] w-[7px] rounded-full bg-[#5F6E66]" />
-          Local only
-        </span>
+        {liveSession === null ? (
+          <span className="flex items-center gap-1.5 text-[11.5px] text-[#8A9990]">
+            <span className="block h-[7px] w-[7px] rounded-full bg-[#5F6E66]" />
+            Local only
+          </span>
+        ) : (
+          <a
+            href={href('work')}
+            className="flex items-center gap-1.5 text-[11.5px] text-[#4CC26A] no-underline"
+          >
+            <span className="block h-[7px] w-[7px] rounded-full bg-[#4CC26A]" />
+            Session running · {formatDuration(sessionTotals(liveSession, now).total)}
+          </a>
+        )}
 
         <button
           onClick={onAdd}

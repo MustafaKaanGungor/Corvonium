@@ -45,3 +45,36 @@ export interface Project {
   createdAt: number;
   updatedAt: number;
 }
+
+export type SegmentKind = 'work' | 'break';
+
+/** One uninterrupted run of either work or break inside a session — §2.6. */
+export interface Segment {
+  kind: SegmentKind;
+  /** What was being worked on. A list: working on two things at once is normal. */
+  itemIds: string[];
+  startedAt: number;
+  endedAt: number | null; // null on the live segment
+}
+
+/**
+ * One continuous stretch of working, from Start the Day to End Session.
+ *
+ * No stored totals — no duration, no work/break sums, no focus percentage, no
+ * segment count. All of it is arithmetic over `segments`, computed on read, so
+ * no total can ever disagree with its own parts.
+ */
+export interface Session {
+  id: string;
+  startedAt: number;
+  endedAt: number | null; // null while running
+  segments: Segment[];
+  /**
+   * When the app last knew you were there — written once a minute while Work Mode
+   * is open and visible. Device-local bookkeeping for the forgotten-session
+   * failsafe, not a fact about the session; Phase 2 should not sync it.
+   */
+  lastSeenAt: number;
+  createdAt: number;
+  updatedAt: number;
+}

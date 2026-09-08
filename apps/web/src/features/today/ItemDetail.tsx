@@ -1,6 +1,13 @@
 import type { ReactNode } from 'react';
-import { effectiveDue, isMissed, type Item, type Project } from '@corvonium/shared';
-import { formatDate, formatRelativeDay, formatTime } from '../../lib/format';
+import {
+  effectiveDue,
+  isMissed,
+  sessionTotals,
+  type Item,
+  type Project,
+  type Session,
+} from '@corvonium/shared';
+import { formatDate, formatDuration, formatRelativeDay, formatTime } from '../../lib/format';
 
 /**
  * One item, read-only, for the detail column beside wide Today.
@@ -24,10 +31,12 @@ type Props = {
   item: Item | null;
   now: number;
   project?: Project;
+  liveSession: Session | null;
   onEdit: () => void;
+  onStart: () => void;
 };
 
-export function ItemDetail({ item, now, project, onEdit }: Props) {
+export function ItemDetail({ item, now, project, liveSession, onEdit, onStart }: Props) {
   if (item === null) {
     return (
       <div className="grid h-full place-items-center p-5 text-center">
@@ -125,13 +134,18 @@ export function ItemDetail({ item, now, project, onEdit }: Props) {
         action rather than one belonging to this item, but the prototype puts it
         here on desktop and it is the right place: it frees the list to run the
         full height of the screen.
+
+        Starting from here does put you straight on the selected item, which is the
+        one thing this position earns over the phone's button.
       */}
       <div className="mt-4 grid shrink-0 gap-2">
         <button
-          disabled
-          className="rounded-xl bg-[#4CC26A] py-3 text-sm font-semibold text-[#06210F] disabled:opacity-30"
+          onClick={onStart}
+          className="rounded-xl bg-[#4CC26A] py-3 text-sm font-semibold text-[#06210F]"
         >
-          ▶ Start the Day
+          {liveSession === null
+            ? '▶ Start the Day'
+            : `Resume session · ${formatDuration(sessionTotals(liveSession, now).total)}`}
         </button>
         <button
           onClick={onEdit}

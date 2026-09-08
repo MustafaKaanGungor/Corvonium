@@ -132,6 +132,19 @@ Session
 
 **Session lifecycle:** `idle → work ⇄ break → ended`. A session is only ever live on one device, and per §6 the running timer is never synced — the completed session syncs once, after it ends.
 
+**The forgotten-session failsafe.** Counting on the wall clock means a session you forget to end keeps accruing: leave one overnight and the day, the week and the month are all distorted at once, with nothing in Stats to mark the number as doubtful. So the app keeps a **heartbeat** — `lastSeenAt`, written once a minute while Work Mode is open _and the page is visible_. The visibility condition is the load-bearing part: a backgrounded tab is throttled to roughly that interval rather than stopped, so without it the heartbeat would keep beating while you slept.
+
+A running session is **suspect** on either of two thresholds, because the two kinds of segment carry different evidence:
+
+- live segment is **work** and the heartbeat is stale by **more than 10 minutes** — work means you are at the machine, so absence is strong evidence the work stopped;
+- live segment is **break** and it has run **more than 90 minutes** — a break is _precisely_ when you are away, so absence proves nothing about it and only implausible length can flag it.
+
+A suspect session opens a prompt **instead of** the timer, and the prompt only ever asks: _End it at `lastSeenAt`_ / _Keep it all and carry on_ / _End it now_ / _Set a time…_, the last a `datetime-local` (not a time — a forgotten session routinely spans midnight) bounded by the live segment's start and the present. Nothing is edited without an answer. Auto-capping was rejected for inventing an end time you never chose and truncating genuine long stretches, silently.
+
+> **The heartbeat must be withheld until the session is cleared.** `lastSeenAt` is the evidence, and the heartbeat overwrites it — including once on mount. Beat first and opening the tab after leaving a session running all night resets the very value the check reads, so the prompt can never fire.
+
+`lastSeenAt` is device-local bookkeeping about our own attention rather than a fact about the session, so **Phase 2 should not sync it**.
+
 ### 2.7 Quick capture — one line in, a filled-in item out
 
 Adding something should cost one sentence. You type or dictate **"Take the garbage out every 2 days important home"** and the app keeps _Take the garbage out_ as the title, sets a two-day recurrence, marks it important, files it under Home, and drops the words it used.
@@ -709,6 +722,7 @@ One document per session, with its segments embedded.
       endedAt: number | null    // null on the live segment
     }
   ],
+  lastSeenAt: number,           // heartbeat — see the failsafe in §2.6
   createdAt: number,
   updatedAt: number
 }
