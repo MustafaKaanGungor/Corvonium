@@ -1,3 +1,4 @@
+import { anchorOf } from './recurrence';
 import type { Item } from './types';
 
 /** What the schedule section of the item form can produce. */
@@ -25,5 +26,19 @@ export function scheduleError(part: SchedulePart): string | null {
     return 'It ends before it starts.';
   }
 
+  return null;
+}
+
+/**
+ * A reason a recurrence rule cannot be saved, or `null` if it is fine.
+ *
+ * A rule needs something to count from: "every Monday" starting nowhere has no
+ * first occurrence and would expand to nothing, silently.
+ */
+export function recurrenceError(
+  item: Pick<Item, 'rrule' | 'start' | 'due' | 'startDate'>,
+): string | null {
+  if (item.rrule === null) return null;
+  if (anchorOf(item as Item) === null) return 'Give it a date or a deadline to repeat from.';
   return null;
 }

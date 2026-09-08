@@ -8,3 +8,5 @@ export * from './ordering';
 export * from './today';
 export * from './validate';
 export * from './sessions';
+export * from './recurrence';
+export * from './calendar';

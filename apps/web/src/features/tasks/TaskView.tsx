@@ -282,7 +282,9 @@ export function TaskView({ items, projects, now, filter, projectFilter, onOpen }
     }
 
     moveItem(
-      item,
+      // Routine rows are *occurrences*, which have no document of their own — the
+      // order belongs to the series behind them.
+      item.seriesId === null ? item : { ...item, id: item.seriesId },
       target.group,
       target.neighbours.map((i) => i.sortOrder),
       target.index,

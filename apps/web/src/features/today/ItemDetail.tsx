@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import {
+  describeRule,
   effectiveDue,
   isMissed,
   sessionTotals,
@@ -36,13 +37,31 @@ type Props = {
   onStart: () => void;
 };
 
+/** The label the start button carries, which is also the way back to a session. */
+function startLabel(liveSession: Session | null, now: number): string {
+  if (liveSession === null) return '▶ Start the Day';
+  return `Resume session · ${formatDuration(sessionTotals(liveSession, now).total)}`;
+}
+
+const START_BUTTON = 'rounded-xl bg-[#4CC26A] py-3 text-sm font-semibold text-[#06210F]';
+
 export function ItemDetail({ item, now, project, liveSession, onEdit, onStart }: Props) {
   if (item === null) {
     return (
-      <div className="grid h-full place-items-center p-5 text-center">
+      /*
+        Start the Day has to be here too. On a wide screen this pane is the only
+        place it lives, so an empty Today would otherwise offer no way to begin —
+        or worse, no way back to a session already running.
+      */
+      <div className="flex h-full flex-col items-center justify-center gap-4 p-5 text-center">
         <p className="max-w-[24ch] text-sm text-[#5F6E66]">
-          Pick something from the list to see it here.
+          {liveSession === null
+            ? 'Pick something from the list to see it here.'
+            : 'A session is running.'}
         </p>
+        <button onClick={onStart} className={`${START_BUTTON} w-full max-w-[240px]`}>
+          {startLabel(liveSession, now)}
+        </button>
       </div>
     );
   }
@@ -103,11 +122,12 @@ export function ItemDetail({ item, now, project, liveSession, onEdit, onStart }:
           )}
         </Meta>
 
-        {/* `rrule` is always null until block 5 builds recurrence. */}
         <Meta label="Repeat">
-          <span className="text-[#5F6E66]">
-            {item.rrule === null ? 'Does not repeat' : item.rrule}
-          </span>
+          {item.rrule === null ? (
+            <span className="text-[#5F6E66]">Does not repeat</span>
+          ) : (
+            <span>{describeRule(item.rrule)}</span>
+          )}
         </Meta>
 
         <Meta label="Important">
@@ -139,13 +159,8 @@ export function ItemDetail({ item, now, project, liveSession, onEdit, onStart }:
         one thing this position earns over the phone's button.
       */}
       <div className="mt-4 grid shrink-0 gap-2">
-        <button
-          onClick={onStart}
-          className="rounded-xl bg-[#4CC26A] py-3 text-sm font-semibold text-[#06210F]"
-        >
-          {liveSession === null
-            ? '▶ Start the Day'
-            : `Resume session · ${formatDuration(sessionTotals(liveSession, now).total)}`}
+        <button onClick={onStart} className={START_BUTTON}>
+          {startLabel(liveSession, now)}
         </button>
         <button
           onClick={onEdit}

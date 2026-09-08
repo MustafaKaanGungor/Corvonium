@@ -1,27 +1,21 @@
 import { useState } from 'react';
-import type { Item } from '@corvonium/shared';
+import { expandAll, type Item, type SeriesScope } from '@corvonium/shared';
 import { useItems, useProjects, useSessions } from './db/hooks';
-import { addItem, editItem, removeItem, setStatus } from './db/items';
+import { addItem, cancelSeries, editItem, editSeries, removeItem, setStatus } from './db/items';
 import { useNow } from './lib/useNow';
 import { useRoute } from './lib/router';
 import { NavBar } from './components/NavBar';
 import { TopBar } from './components/TopBar';
 import { Sheet } from './components/Sheet';
-import { ItemForm } from './features/items/ItemForm';
+import { ItemForm, type ItemDraft } from './features/items/ItemForm';
+import { SeriesChoice } from './features/items/SeriesChoice';
+import { CalendarScreen } from './features/calendar/CalendarScreen';
+import { calendarView } from './features/calendar/viewState';
 import { SettingsSheet } from './features/settings/SettingsSheet';
 import { StatsScreen } from './features/stats/StatsScreen';
 import { TasksScreen } from './features/tasks/TasksScreen';
 import { TodayView } from './features/today/TodayView';
 import { WorkScreen } from './features/work/WorkScreen';
-
-function Placeholder({ title, detail }: { title: string; detail: string }) {
-  return (
-    <div className="flex h-full flex-col items-center justify-center gap-2 px-8 text-center">
-      <h1 className="text-xl font-bold tracking-tight">{title}</h1>
-      <p className="max-w-[34ch] text-sm text-[#5F6E66]">{detail}</p>
-    </div>
-  );
-}
 
 export default function App() {
   const { screen, params } = useRoute();
@@ -30,7 +24,8 @@ export default function App() {
   const { data: sessions } = useSessions();
   const now = useNow();
 
-  const [adding, setAdding] = useState(false);
+  // A day key when the calendar opened the form, so it can prefill the date.
+  const [adding, setAdding] = useState<string | true | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   /*
@@ -44,19 +39,63 @@ export default function App() {
     mid-edit. That is deliberate.
   */
   const [editingId, setEditingId] = useState<string | null>(null);
-  const editing = editingId === null ? null : (items?.find((i) => i.id === editingId) ?? null);
 
-  const itemSheetOpen = adding || editing !== null;
+  /*
+    Occurrences are expanded here, once, and every list-shaped screen renders the
+    result — §2.4. They are ordinary `Item` objects with shifted dates, which is
+    why Today, Tasks and every grouping function needed no changes at all.
+
+    Work Mode deliberately keeps the *raw* list: its picker attaches a series to a
+    segment, so time on a routine accumulates across every occurrence instead of
+    fragmenting into a separate item per day.
+  */
+  const visible = items === null ? null : expandAll(items, now);
+  const editing = editingId === null ? null : (visible?.find((i) => i.id === editingId) ?? null);
+
+  /** The stored document an occurrence belongs to, for the three-way choice. */
+  const series =
+    editing?.seriesId == null ? null : (items?.find((i) => i.id === editing.seriesId) ?? null);
+
+  // A pending change to something that repeats, held until the scope is chosen.
+  const [pending, setPending] = useState<
+    { verb: 'Save'; draft: ItemDraft } | { verb: 'Cancel' } | null
+  >(null);
+
+  const itemSheetOpen = adding !== null || editing !== null;
 
   function closeItemSheet() {
-    setAdding(false);
+    setAdding(null);
     setEditingId(null);
+    setPending(null);
+  }
+
+  /**
+   * Apply a held change once its scope is known. `editing` is the occurrence you
+   * acted on and `series` the document behind it — both are needed, because
+   * "just this one" writes an override while the other two touch the series.
+   */
+  function applyScope(scope: SeriesScope) {
+    if (editing === null || series === null || pending === null) return;
+
+    if (pending.verb === 'Cancel') void cancelSeries(editing, series, scope);
+    else void editSeries(editing, series, scope, pending.draft);
+
+    closeItemSheet();
   }
 
   const openItem = (item: Item) => setEditingId(item.id);
 
-  const showsList =
-    screen === 'today' || screen === 'tasks' || screen === 'work' || screen === 'stats';
+  /**
+   * §3.2: adding from the calendar prefills the **selected day**, from anywhere
+   * else it prefills today.
+   *
+   * The desktop shell has no floating button — its Add lives in the top bar, which
+   * is outside the calendar — so the day is read from the same module state that
+   * lets the selection survive a tab switch.
+   */
+  function startAdding() {
+    setAdding(screen === 'calendar' ? (calendarView.selected ?? true) : true);
+  }
 
   const liveSession = sessions?.find((s) => s.endedAt === null) ?? null;
 
@@ -66,7 +105,7 @@ export default function App() {
         current={screen}
         liveSession={liveSession}
         now={now}
-        onAdd={() => setAdding(true)}
+        onAdd={startAdding}
         onOpenSettings={() => setSettingsOpen(true)}
       />
 
@@ -82,11 +121,11 @@ export default function App() {
               </span>
             </p>
           </div>
-        ) : showsList && items === null ? (
+        ) : visible === null ? (
           <p className="p-5 text-sm text-[#5F6E66]">Loading&hellip;</p>
         ) : screen === 'today' ? (
           <TodayView
-            items={items ?? []}
+            items={visible ?? []}
             projects={projects ?? []}
             now={now}
             liveSession={liveSession}
@@ -95,7 +134,7 @@ export default function App() {
           />
         ) : screen === 'tasks' ? (
           <TasksScreen
-            items={items ?? []}
+            items={visible ?? []}
             projects={projects ?? []}
             now={now}
             params={params}
@@ -104,9 +143,13 @@ export default function App() {
         ) : screen === 'work' ? (
           <WorkScreen sessions={sessions ?? []} items={items ?? []} projects={projects ?? []} />
         ) : screen === 'calendar' ? (
-          <Placeholder
-            title="Calendar"
-            detail="The month grid, Plan and Effort modes. Block 6 — it needs the recurrence and lane-assignment engines first."
+          <CalendarScreen
+            items={items ?? []}
+            projects={projects ?? []}
+            sessions={sessions ?? []}
+            now={now}
+            onOpen={openItem}
+            onAdd={(day) => setAdding(day)}
           />
         ) : (
           <StatsScreen
@@ -120,7 +163,8 @@ export default function App() {
 
       {/*
         Tasks only. Today's primary action is Start the Day (§3.3) and a floating
-        button there lands on top of it; the calendar gets one when it is built.
+        button there lands on top of it; the calendar carries its own, because its
+        button prefills the *selected day* and so belongs with that state.
       */}
       {screen === 'tasks' && itemsError === null && (
         <button
@@ -136,29 +180,45 @@ export default function App() {
       <NavBar current={screen} />
 
       <Sheet open={itemSheetOpen} onClose={closeItemSheet}>
-        {itemSheetOpen && (
-          <ItemForm
-            key={editing?.id ?? 'new'}
-            initial={editing ?? undefined}
-            projects={projects ?? []}
-            onSubmit={(draft) => {
-              if (editing) editItem(editing.id, draft);
-              else addItem(draft);
-              closeItemSheet();
-            }}
-            onClose={closeItemSheet}
-            onSetStatus={(status) => {
-              if (!editing) return;
-              setStatus(editing.id, status);
-              closeItemSheet();
-            }}
-            onDelete={() => {
-              if (!editing) return;
-              removeItem(editing.id);
-              closeItemSheet();
-            }}
-          />
-        )}
+        {itemSheetOpen &&
+          (pending !== null && editing !== null ? (
+            <SeriesChoice
+              occurrence={editing}
+              verb={pending.verb}
+              onCancel={() => setPending(null)}
+              onChoose={applyScope}
+            />
+          ) : (
+            <ItemForm
+              key={editing?.id ?? 'new'}
+              initial={editing ?? undefined}
+              defaultDay={typeof adding === 'string' ? adding : undefined}
+              projects={projects ?? []}
+              onSubmit={(draft) => {
+                // Anything that repeats asks which occurrences it means first.
+                if (series !== null) return setPending({ verb: 'Save', draft });
+                if (editing) editItem(editing.id, draft);
+                else addItem(draft);
+                closeItemSheet();
+              }}
+              onClose={closeItemSheet}
+              onSetStatus={(status) => {
+                if (!editing) return;
+                if (series !== null && status === 'cancelled') {
+                  return setPending({ verb: 'Cancel' });
+                }
+                setStatus(editing.id, status);
+                closeItemSheet();
+              }}
+              onDelete={() => {
+                if (!editing) return;
+                // Deleting reaches the real document: an occurrence has none of
+                // its own, so the series is what there is to delete.
+                removeItem(series?.id ?? editing.id);
+                closeItemSheet();
+              }}
+            />
+          ))}
       </Sheet>
 
       <Sheet open={settingsOpen} onClose={() => setSettingsOpen(false)}>

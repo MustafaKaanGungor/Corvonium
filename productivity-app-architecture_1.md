@@ -80,6 +80,12 @@ Tasks and events both recur. The item editor offers presets that generate an RRU
 
 Occurrences are expanded at render time, never stored as rows. **Completing one occurrence writes a small override item** carrying `seriesId` + `originalStart` + its status. So the series stays one document and only the occurrences you actually touched cost a row.
 
+**The series document is never rendered as a row.** Its own dates are the anchor a rule counts from, not a commitment — drawing it would put the item on screen dated whenever you first created it, looking permanently missed. Only occurrences appear, and an occurrence is an in-memory `Item` with shifted dates carrying `seriesId` + `originalStart`. That is what lets every grouping, filter and row component stay unchanged: they already take an `Item`.
+
+**Missed occurrences accumulate, bounded.** Every skipped occurrence inside a **60-day horizon** (`MISSED_HORIZON_DAYS`) is its own missed row; past that they stop. A daily routine untouched for three years would otherwise be a thousand rows recomputed on every render, and a habit dropped two months ago is a decision already made rather than an outstanding to-do. Forward, expansion reaches the end of today **plus one** occurrence per series, so a Monday-only routine stays findable and editable on a Wednesday.
+
+> **Expansion works in dates, never in instants.** `rrule` computes in UTC, and handing it a real instant moves a 09:00 routine to 08:00 or 10:00 across a clock change — the failure the library is best known for. The rule is expanded over calendar dates and the local time of day is re-attached afterwards by shifting whole days. Turkey has been on permanent GMT+3 since 2016, so the test suite carries a **second project pinned to Europe/London** purely so this can be run across a real DST boundary.
+
 **Cancelling a recurring item always asks which occurrences you mean:**
 
 | Choice                  | What it does                                                                                   |
@@ -89,6 +95,8 @@ Occurrences are expanded at render time, never stored as rows. **Completing one 
 | **All of them**         | the series document itself goes `status: cancelled`                                            |
 
 The prompt appears every time, with no "don't ask again" — the three outcomes are far enough apart that guessing wrong is worse than one extra tap. **Editing** a recurring item needs the identical three-way choice, so it's one shared component, not two.
+
+For an **edit**, "this and all future" is the one branch that is not a patch: the old series is stopped the day before, and a **new series** starts at that occurrence carrying the change. Splitting the document is the only way to say "from here onwards" without rewriting history.
 
 ### 2.5 The three screens
 
@@ -286,6 +294,8 @@ Items render as **bricks** — horizontal bars inside the day cells. An item spa
 
 **Overflow.** On a phone, a cell is roughly 95px tall, which fits about **three** bricks. Past that the cell shows `+N more`; tapping the day opens a day detail sheet with the full list.
 
+> **A brick is drawn whole or not at all**, and the cap is decided per _week row_ rather than per cell. Varying it cell by cell would hide a spanning bar on one of its days and leave it on the others; a row that spills simply shows one fewer brick everywhere, and `+N more` is drawn as a footer inside the cell rather than taking a lane. **Routines sort last** when lanes are handed out, so a daily habit is the first thing pushed into the overflow and one-off commitments keep the visible rows.
+
 **Navigation.** Swiping up/down moves through months, one month per gesture, with the adjacent months kept rendered so the motion is smooth. The header carries a month/year picker to jump anywhere, plus a "today" affordance to come back.
 
 **Month is the only calendar layout.** No week or day view — which puts real weight on the day detail sheet, since it becomes the only place a day's items are seen in full. It should list them in time order and act as the de facto day view.
@@ -311,7 +321,9 @@ The three states matter more than they sound. An earlier pass drew a dash on eve
 
 This is the app's whole thesis as a single control — the plan and the follow-through, on the same grid, one tap apart.
 
-**Mode is remembered within a run of the app, but not across launches.** Switch to Tasks and back and the calendar is as you left it; close the app and reopen it and you're in Plan. That falls out for free if the mode lives in plain in-memory state — a PWA resumed from the background keeps its memory, a cold start doesn't. Don't put it in settings or `localStorage`, or it will persist across launches and you'll have to write code to undo that.
+**Mode is remembered within a run of the app, but not across launches.** Switch to Tasks and back and the calendar is as you left it; close the app and reopen it and you're in Plan. Don't put it in settings or `localStorage`, or it will persist across launches and you'll have to write code to undo that.
+
+> **Not component state, though.** Navigating to another tab _unmounts_ the calendar and takes its `useState` with it, so the mode resets on every visit. The state has to outlive the component without outliving the page load, which is exactly what a **module-scope variable** does: a PWA resumed from the background keeps it, a cold start re-evaluates the module and loses it. The same holds for the selected day and the project filter.
 
 **The project filter sits under the header**, in the same chip row Task view uses (§3.4): month picker and Plan/Effort toggle on the top line, project chips beneath.
 
