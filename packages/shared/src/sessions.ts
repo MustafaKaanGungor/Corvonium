@@ -1,4 +1,4 @@
-import type { Segment, SegmentKind, Session } from './types';
+import type { Item, Segment, SegmentKind, Session } from './types';
 
 /**
  * Sessions, derived and transformed. Everything Work Mode shows is computed here
@@ -229,4 +229,169 @@ export function trimError(session: Session, at: number, now: number): string | n
   if (at > now) return 'That is in the future.';
 
   return null;
+}
+
+/* -------------------------------------------------------------------------- */
+/* ranges and aggregation — what Stats is built from                           */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * A range of whole local days, inclusive at both ends, as 'YYYY-MM-DD' keys.
+ *
+ * Stats works in day keys rather than instants because **the day is the smallest
+ * bucket anywhere in Stats** — §3.6. Keys are ISO, so ordering and containment are
+ * plain string comparisons and no timezone arithmetic is needed to ask whether a
+ * session falls inside a range.
+ */
+export type DayRange = { from: string; to: string };
+
+/** Parse a 'YYYY-MM-DD' key back to local midnight. */
+function fromDayKey(key: string): Date {
+  const [y = 0, m = 1, d = 1] = key.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+
+/**
+ * The week containing `now`, Monday to Sunday.
+ *
+ * Monday is hardcoded: §6 has `weekStartsOn` in settings, but settings are not
+ * built, and inventing a second source for it now would only have to be undone.
+ */
+export function weekRange(now: number): DayRange {
+  const d = new Date(now);
+  const back = (d.getDay() + 6) % 7; // Sunday is 0; Monday should be 0
+  const monday = new Date(d.getFullYear(), d.getMonth(), d.getDate() - back);
+  const sunday = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + 6);
+  return { from: localDayKey(monday.getTime()), to: localDayKey(sunday.getTime()) };
+}
+
+/** The calendar month containing `now`, first to last day. */
+export function monthRange(now: number): DayRange {
+  const d = new Date(now);
+  const first = new Date(d.getFullYear(), d.getMonth(), 1);
+  const last = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+  return { from: localDayKey(first.getTime()), to: localDayKey(last.getTime()) };
+}
+
+/** Every day key in the range, in order. Empty if the range is inverted. */
+export function dayKeysIn(range: DayRange): string[] {
+  const keys: string[] = [];
+  let day = fromDayKey(range.from);
+  const end = fromDayKey(range.to);
+
+  // Stepping a `Date` by one day rather than adding 86_400_000 to a timestamp:
+  // across a DST boundary a "day" is 23 or 25 hours, and the fixed-millisecond
+  // version drifts onto the wrong date.
+  while (day <= end) {
+    keys.push(localDayKey(day.getTime()));
+    day = new Date(day.getFullYear(), day.getMonth(), day.getDate() + 1);
+  }
+
+  return keys;
+}
+
+/**
+ * Sessions that *started* inside the range — §2.6. One running 23:00 → 01:00
+ * belongs wholly to the day it began, so the range never splits a session.
+ */
+export function sessionsIn(sessions: Session[], range: DayRange): Session[] {
+  return sessions.filter((s) => {
+    const key = localDayKey(s.startedAt);
+    return key >= range.from && key <= range.to;
+  });
+}
+
+/** Work, break, focus and segment count across many sessions. */
+export function aggregateTotals(sessions: Session[], now: number): SessionTotals {
+  let work = 0;
+  let broke = 0;
+  let count = 0;
+
+  for (const session of sessions) {
+    const t = sessionTotals(session, now);
+    work += t.work;
+    broke += t.break;
+    count += t.count;
+  }
+
+  const total = work + broke;
+  return { work, break: broke, total, focus: total === 0 ? 0 : work / total, count };
+}
+
+/** Totals per local day, keyed by day. Days with no session are absent. */
+export function dayTotals(sessions: Session[], now: number): Map<string, SessionTotals> {
+  const byDay = new Map<string, Session[]>();
+
+  for (const session of sessions) {
+    const key = localDayKey(session.startedAt);
+    const list = byDay.get(key);
+    if (list === undefined) byDay.set(key, [session]);
+    else list.push(session);
+  }
+
+  const out = new Map<string, SessionTotals>();
+  for (const [key, list] of byDay) out.set(key, aggregateTotals(list, now));
+  return out;
+}
+
+/**
+ * Work milliseconds per project, keyed by `projectId` — `null` for work on items
+ * with no project. Unattributed work (a segment carrying no items) is skipped
+ * rather than invented as a project.
+ *
+ * **Counted per segment, not per item**, which is the difference from
+ * `itemTotals`. A segment carrying two items of the *same* project is two hours on
+ * that project, not four: within one project there is nothing to disambiguate, and
+ * double-counting there would make a project exceed the work total it belongs to.
+ * Across *different* projects it still overlaps, because that is a real ambiguity
+ * about where the hour went — and the screen says so.
+ */
+export function projectTotals(
+  sessions: Session[],
+  items: Item[],
+  now: number,
+): Map<string | null, number> {
+  const projectOf = new Map(items.map((item) => [item.id, item.projectId]));
+  const totals = new Map<string | null, number>();
+
+  for (const session of sessions) {
+    for (const segment of session.segments) {
+      if (segment.kind !== 'work') continue;
+
+      const touched = new Set<string | null>();
+      for (const id of segment.itemIds) {
+        const projectId = projectOf.get(id);
+        if (projectId !== undefined) touched.add(projectId); // the item is gone; do not guess
+      }
+
+      const ms = segmentDuration(segment, now);
+      for (const projectId of touched) {
+        totals.set(projectId, (totals.get(projectId) ?? 0) + ms);
+      }
+    }
+  }
+
+  return totals;
+}
+
+/**
+ * The same sessions with every work segment not touching `projectId` removed.
+ *
+ * Filtering Stats by project cannot mean filtering *sessions* — one session
+ * usually spans several projects. It means narrowing to the segments that carry an
+ * item of that project, which is why break time and focus % stop being answerable
+ * under a project filter: a break belongs to no project, and the screen says so
+ * rather than showing a number that means nothing.
+ */
+export function onlyProject(sessions: Session[], items: Item[], projectId: string): Session[] {
+  const inProject = new Set(
+    items.filter((item) => item.projectId === projectId).map((item) => item.id),
+  );
+
+  return sessions.map((session) => ({
+    ...session,
+    segments: session.segments.filter(
+      (seg) => seg.kind === 'work' && seg.itemIds.some((id) => inProject.has(id)),
+    ),
+  }));
 }

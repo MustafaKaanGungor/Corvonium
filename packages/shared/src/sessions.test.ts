@@ -11,10 +11,18 @@ import {
   startSession,
   switchTo,
   trimError,
+  aggregateTotals,
+  dayKeysIn,
+  dayTotals,
+  monthRange,
+  onlyProject,
+  projectTotals,
+  sessionsIn,
+  weekRange,
   LONG_BREAK_MS,
   WORK_IDLE_MS,
 } from './sessions';
-import type { Segment, Session } from './types';
+import type { Item, Segment, Session } from './types';
 
 const MIN = 60_000;
 
@@ -260,5 +268,199 @@ describe('trimError', () => {
   it('rejects a session that has already ended', () => {
     const done = session([seg('work', T0, T0 + MIN)], { endedAt: T0 + MIN });
     expect(trimError(done, T0 + MIN, now)).not.toBeNull();
+  });
+});
+
+/* -------------------------------------------------------------------------- */
+/* ranges and aggregation                                                      */
+/* -------------------------------------------------------------------------- */
+
+const item = (id: string, projectId: string | null): Item => ({ id, projectId }) as unknown as Item;
+
+/** A session on a given local day: one work segment of `mins`, then an optional break. */
+const onDay = (
+  y: number,
+  m: number,
+  d: number,
+  mins: number,
+  itemIds: string[] = [],
+  breakMins = 0,
+): Session => {
+  const start = new Date(y, m - 1, d, 9, 0).getTime();
+  const workEnd = start + mins * MIN;
+  return session(
+    breakMins === 0
+      ? [seg('work', start, workEnd, itemIds)]
+      : [seg('work', start, workEnd, itemIds), seg('break', workEnd, workEnd + breakMins * MIN)],
+    { id: `${y}-${m}-${d}-${mins}`, startedAt: start, endedAt: workEnd + breakMins * MIN },
+  );
+};
+
+describe('weekRange', () => {
+  it('runs Monday to Sunday around a midweek day', () => {
+    // 2026-09-08 is a Tuesday.
+    expect(weekRange(new Date(2026, 8, 8, 12, 0).getTime())).toEqual({
+      from: '2026-09-07',
+      to: '2026-09-13',
+    });
+  });
+
+  it('treats Sunday as the end of its week, not the start', () => {
+    expect(weekRange(new Date(2026, 8, 13, 12, 0).getTime())).toEqual({
+      from: '2026-09-07',
+      to: '2026-09-13',
+    });
+  });
+
+  it('spans a month boundary without breaking', () => {
+    // 2026-10-01 is a Thursday, so the week begins in September.
+    expect(weekRange(new Date(2026, 9, 1, 12, 0).getTime()).from).toBe('2026-09-28');
+  });
+});
+
+describe('monthRange', () => {
+  it('covers the whole calendar month', () => {
+    expect(monthRange(new Date(2026, 8, 8).getTime())).toEqual({
+      from: '2026-09-01',
+      to: '2026-09-30',
+    });
+  });
+
+  it('gets February right in a leap year', () => {
+    expect(monthRange(new Date(2028, 1, 10).getTime()).to).toBe('2028-02-29');
+  });
+});
+
+describe('dayKeysIn', () => {
+  it('is inclusive at both ends', () => {
+    expect(dayKeysIn({ from: '2026-09-07', to: '2026-09-09' })).toEqual([
+      '2026-09-07',
+      '2026-09-08',
+      '2026-09-09',
+    ]);
+  });
+
+  it('returns a single day for a one-day range', () => {
+    expect(dayKeysIn({ from: '2026-09-08', to: '2026-09-08' })).toEqual(['2026-09-08']);
+  });
+
+  it('crosses a month boundary', () => {
+    expect(dayKeysIn({ from: '2026-09-29', to: '2026-10-02' })).toHaveLength(4);
+  });
+
+  it('is empty when the range is inverted', () => {
+    expect(dayKeysIn({ from: '2026-09-09', to: '2026-09-07' })).toEqual([]);
+  });
+});
+
+describe('sessionsIn', () => {
+  const all = [onDay(2026, 9, 6, 30), onDay(2026, 9, 8, 30), onDay(2026, 9, 20, 30)];
+
+  it('keeps only sessions started inside the range', () => {
+    expect(sessionsIn(all, { from: '2026-09-07', to: '2026-09-13' })).toHaveLength(1);
+  });
+
+  it('includes both boundary days', () => {
+    expect(sessionsIn(all, { from: '2026-09-06', to: '2026-09-08' })).toHaveLength(2);
+  });
+
+  it('files a session by the day it started, not the day it ended', () => {
+    // 23:30 -> 00:30 belongs wholly to the 8th.
+    const startedAt = new Date(2026, 8, 8, 23, 30).getTime();
+    const overnight = session([seg('work', startedAt, startedAt + 60 * MIN)], { startedAt });
+    expect(sessionsIn([overnight], { from: '2026-09-09', to: '2026-09-09' })).toHaveLength(0);
+    expect(sessionsIn([overnight], { from: '2026-09-08', to: '2026-09-08' })).toHaveLength(1);
+  });
+});
+
+describe('aggregateTotals', () => {
+  it('sums across sessions and keeps the parts adding up', () => {
+    const t = aggregateTotals([onDay(2026, 9, 8, 40, [], 10), onDay(2026, 9, 9, 20)], T0);
+    expect(t.work).toBe(60 * MIN);
+    expect(t.break).toBe(10 * MIN);
+    expect(t.total).toBe(t.work + t.break);
+    expect(t.count).toBe(3);
+  });
+
+  it('is zero, not NaN, over no sessions at all', () => {
+    expect(aggregateTotals([], T0)).toEqual({ work: 0, break: 0, total: 0, focus: 0, count: 0 });
+  });
+});
+
+describe('dayTotals', () => {
+  it('buckets sessions by their start day and sums each', () => {
+    const totals = dayTotals(
+      [onDay(2026, 9, 8, 30), onDay(2026, 9, 8, 20), onDay(2026, 9, 9, 15)],
+      T0,
+    );
+    expect(totals.get('2026-09-08')?.work).toBe(50 * MIN);
+    expect(totals.get('2026-09-09')?.work).toBe(15 * MIN);
+  });
+
+  it('omits days with no sessions rather than storing zeroes', () => {
+    expect(dayTotals([onDay(2026, 9, 8, 30)], T0).has('2026-09-09')).toBe(false);
+  });
+});
+
+describe('projectTotals', () => {
+  const items = [item('a', 'p1'), item('b', 'p1'), item('c', 'p2'), item('d', null)];
+
+  it('sums a project across its items', () => {
+    const s = [onDay(2026, 9, 8, 30, ['a']), onDay(2026, 9, 9, 20, ['b'])];
+    expect(projectTotals(s, items, T0).get('p1')).toBe(50 * MIN);
+  });
+
+  it('counts a segment against both projects it touches', () => {
+    const totals = projectTotals([onDay(2026, 9, 8, 40, ['a', 'c'])], items, T0);
+    expect(totals.get('p1')).toBe(40 * MIN);
+    expect(totals.get('p2')).toBe(40 * MIN);
+  });
+
+  it('counts a segment once for a project even when it carries two of its items', () => {
+    // 'a' and 'b' are both in p1. Forty minutes on both is forty on p1, not eighty:
+    // within one project there is no ambiguity about where the time went, and
+    // double-counting would let a project exceed the work total it belongs to.
+    const s = [onDay(2026, 9, 8, 40, ['a', 'b'])];
+    expect(projectTotals(s, items, T0).get('p1')).toBe(40 * MIN);
+    expect(projectTotals(s, items, T0).get('p1')).toBeLessThanOrEqual(aggregateTotals(s, T0).work);
+  });
+
+  it('never lets any single project exceed the work total', () => {
+    const s = [onDay(2026, 9, 8, 40, ['a', 'b']), onDay(2026, 9, 9, 30, ['a'])];
+    const work = aggregateTotals(s, T0).work;
+    for (const ms of projectTotals(s, items, T0).values()) expect(ms).toBeLessThanOrEqual(work);
+  });
+
+  it('files unprojected items under null rather than dropping them', () => {
+    expect(projectTotals([onDay(2026, 9, 8, 25, ['d'])], items, T0).get(null)).toBe(25 * MIN);
+  });
+
+  it('ignores an item that no longer exists instead of guessing', () => {
+    expect(projectTotals([onDay(2026, 9, 8, 25, ['gone'])], items, T0).size).toBe(0);
+  });
+});
+
+describe('onlyProject', () => {
+  const items = [item('a', 'p1'), item('c', 'p2')];
+
+  it('keeps only work segments touching the project', () => {
+    const s = [onDay(2026, 9, 8, 40, ['a'], 10), onDay(2026, 9, 9, 20, ['c'])];
+    const t = aggregateTotals(onlyProject(s, items, 'p1'), T0);
+
+    expect(t.work).toBe(40 * MIN);
+    // Break time belongs to no project, so it is gone — which is why the screen
+    // shows a dash for break and focus under a project filter.
+    expect(t.break).toBe(0);
+  });
+
+  it('drops work on items outside the project', () => {
+    const filtered = onlyProject([onDay(2026, 9, 8, 40, ['c'])], items, 'p1');
+    expect(aggregateTotals(filtered, T0).work).toBe(0);
+  });
+
+  it('keeps a shared segment in full for each project it touches', () => {
+    const s = [onDay(2026, 9, 8, 40, ['a', 'c'])];
+    expect(aggregateTotals(onlyProject(s, items, 'p1'), T0).work).toBe(40 * MIN);
+    expect(aggregateTotals(onlyProject(s, items, 'p2'), T0).work).toBe(40 * MIN);
   });
 });

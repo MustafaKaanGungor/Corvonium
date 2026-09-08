@@ -9,6 +9,7 @@ import { TopBar } from './components/TopBar';
 import { Sheet } from './components/Sheet';
 import { ItemForm } from './features/items/ItemForm';
 import { SettingsSheet } from './features/settings/SettingsSheet';
+import { StatsScreen } from './features/stats/StatsScreen';
 import { TasksScreen } from './features/tasks/TasksScreen';
 import { TodayView } from './features/today/TodayView';
 import { WorkScreen } from './features/work/WorkScreen';
@@ -54,7 +55,8 @@ export default function App() {
 
   const openItem = (item: Item) => setEditingId(item.id);
 
-  const showsList = screen === 'today' || screen === 'tasks' || screen === 'work';
+  const showsList =
+    screen === 'today' || screen === 'tasks' || screen === 'work' || screen === 'stats';
 
   const liveSession = sessions?.find((s) => s.endedAt === null) ?? null;
 
@@ -107,9 +109,11 @@ export default function App() {
             detail="The month grid, Plan and Effort modes. Block 6 — it needs the recurrence and lane-assignment engines first."
           />
         ) : (
-          <Placeholder
-            title="Stats"
-            detail="Where your time went, aggregated from work sessions. The next block — Work Mode is recording them now."
+          <StatsScreen
+            sessions={sessions ?? []}
+            items={items ?? []}
+            projects={projects ?? []}
+            now={now}
           />
         )}
       </main>
