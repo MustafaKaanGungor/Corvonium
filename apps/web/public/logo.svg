@@ -1,0 +1,36 @@
+<!--
+  PLACEHOLDER. Corvonium has no real mark yet.
+
+  A crow's head in profile, because the name reads as corvid, in the app's own
+  green on its own dark ground. Every icon the manifest, iOS and the favicon need
+  is rendered from this one file, so replacing it is: drop new artwork in here,
+  then `pnpm icons`.
+
+  A head rather than a whole bird: at 48px a full silhouette becomes a blob, and
+  legs and tail feathers are the first things to disappear. A heavy beak and one
+  punched-out eye still read at favicon size.
+
+  It sits inside the middle ~60% of the canvas on purpose — Android crops a
+  maskable icon to a circle and shaves roughly 20% off each edge, so anything
+  drawn to the full box loses its beak to that crop.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" fill="#0A0E0C" />
+
+  <path
+    fill="#4CC26A"
+    d="M300 138
+       C372 138, 424 196, 424 262
+       C424 322, 404 372, 382 404
+       L296 404
+       C246 386, 212 344, 202 300
+       L96 266
+       C92 264, 92 259, 96 257
+       L198 218
+       C210 176, 250 138, 300 138
+       Z"
+  />
+
+  <!-- Punched out of the head, not drawn over it, so it survives any recolour. -->
+  <circle cx="318" cy="232" r="17" fill="#0A0E0C" />
+</svg>

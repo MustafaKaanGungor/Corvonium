@@ -78,6 +78,73 @@ describe('turning on a repeat', () => {
   });
 });
 
+describe('who gets the cursor', () => {
+  /*
+    Quick capture puts its own line above this form and re-seeds it on every
+    keystroke, which remounts it. An unconditional `autoFocus` here therefore
+    snatched the cursor out of the capture line after a single character — the
+    capture field was unusable.
+  */
+  it('leaves the title alone by default', () => {
+    setup();
+    expect(document.activeElement).not.toBe(title());
+  });
+
+  it('takes the title only when asked, which is how editing opens', () => {
+    render(<ItemForm autoFocusTitle projects={[]} onSubmit={() => {}} onClose={() => {}} />);
+    expect(document.activeElement).toBe(screen.getByPlaceholderText('What needs doing?'));
+  });
+});
+
+describe('a rule that arrives already made', () => {
+  /*
+    Quick capture parses "every 2 days" into an rrule and hands it over as a
+    prefill, which skips the by-hand path that supplies an anchor. Without the
+    same rule applied at seed time, the headline sentence of that whole feature
+    produced a form that could not be saved.
+  */
+  it('is saveable, with a date filled in', () => {
+    render(
+      <ItemForm
+        prefill={{ title: 'Take the garbage out', rrule: 'FREQ=DAILY;INTERVAL=2' }}
+        projects={[]}
+        onSubmit={() => {}}
+        onClose={() => {}}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Add' })).toBeEnabled();
+    expect(screen.queryByText(/Give it a date/)).not.toBeInTheDocument();
+    expect((screen.getByLabelText(/^Due/) as HTMLInputElement).value).not.toBe('');
+  });
+
+  it('leaves a date the prefill already carried alone', () => {
+    render(
+      <ItemForm
+        prefill={{ rrule: 'FREQ=DAILY', due: new Date(2027, 2, 1, 9, 0).getTime() }}
+        projects={[]}
+        onSubmit={() => {}}
+        onClose={() => {}}
+      />,
+    );
+
+    expect((screen.getByLabelText(/^Due/) as HTMLInputElement).value).toBe('2027-03-01T09:00');
+  });
+
+  it('does not invent a date for a prefill with no rule', () => {
+    render(
+      <ItemForm
+        prefill={{ title: 'Renew the domain' }}
+        projects={[]}
+        onSubmit={() => {}}
+        onClose={() => {}}
+      />,
+    );
+
+    expect((screen.getByLabelText(/^Due/) as HTMLInputElement).value).toBe('');
+  });
+});
+
 describe('the validation backstop is still there', () => {
   it('refuses a rule once the date is cleared again', () => {
     setup();

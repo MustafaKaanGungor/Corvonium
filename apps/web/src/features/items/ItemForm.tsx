@@ -2,6 +2,7 @@ import { useState, type FormEvent, type SetStateAction } from 'react';
 import {
   recurrenceError,
   scheduleError,
+  type ItemEdit,
   type Item,
   type ItemKind,
   type ItemStatus,
@@ -30,20 +31,43 @@ export type ItemDraft = {
 /** How the schedule section is presented. The stored fields follow from it. */
 type ScheduleMode = 'none' | 'allday' | 'timed';
 
-function modeOf(item: Item | undefined): ScheduleMode {
-  if (!item) return 'none';
-  if (item.allDay) return 'allday';
-  if (item.start !== null || item.end !== null) return 'timed';
+/**
+ * The anchor a repeat falls back to — end of today.
+ *
+ * End of day rather than now, because a daily routine is not late until the day
+ * is over.
+ */
+function endOfToday(): string {
+  const d = new Date();
+  d.setHours(23, 59, 0, 0);
+  return toDateTimeLocal(d.getTime());
+}
+
+function modeOf(seed: ItemEdit): ScheduleMode {
+  if (seed.allDay === true) return 'allday';
+  if (seed.start != null || seed.end != null) return 'timed';
   return 'none';
 }
 
 type Props = {
   initial?: Item;
   /**
-   * The day a *new* item should land on — the calendar's selected day (§3.2).
-   * Ignored when editing, where the item already has its own dates.
+   * Starting values for a *new* item — the calendar's selected day (§3.2), or
+   * whatever quick capture parsed out of a sentence (§2.7).
+   *
+   * One seeding path rather than a prop per source: `initial` when editing,
+   * `prefill` when adding.
    */
-  defaultDay?: string;
+  prefill?: ItemEdit;
+  /**
+   * Focus the title on mount.
+   *
+   * Only for the *first* control on screen. Quick capture puts its own line above
+   * this form and re-seeds it on every keystroke, which remounts it — so an
+   * unconditional `autoFocus` here would snatch the cursor out of the capture
+   * line after the first character typed.
+   */
+  autoFocusTitle?: boolean;
   projects: Project[];
   onSubmit: (draft: ItemDraft) => void;
   /** Dismiss the sheet. Distinct from cancelling the *item*. */
@@ -87,25 +111,36 @@ function Segmented<T extends string>({
 
 export function ItemForm({
   initial,
-  defaultDay,
+  prefill,
+  autoFocusTitle = false,
   projects,
   onSubmit,
   onClose,
   onSetStatus,
   onDelete,
 }: Props) {
-  const [title, setTitle] = useState(initial?.title ?? '');
-  const [notes, setNotes] = useState(initial?.notes ?? '');
-  const [kind, setKind] = useState<ItemKind>(initial?.kind ?? 'task');
-  const [location, setLocation] = useState(initial?.location ?? '');
-  const [important, setImportant] = useState(initial?.important ?? false);
-  const [projectId, setProjectId] = useState(initial?.projectId ?? '');
+  // Editing reads the item; adding reads whatever the caller worked out.
+  const seed: ItemEdit = initial ?? prefill ?? {};
+
+  const [title, setTitle] = useState(seed.title ?? '');
+  const [notes, setNotes] = useState(seed.notes ?? '');
+  const [kind, setKind] = useState<ItemKind>(seed.kind ?? 'task');
+  const [location, setLocation] = useState(seed.location ?? '');
+  const [important, setImportant] = useState(seed.important ?? false);
+  const [projectId, setProjectId] = useState(seed.projectId ?? '');
   const [due, setDue] = useState(() => {
-    if (initial?.due != null) return toDateTimeLocal(initial.due);
-    // End of the chosen day: a deadline is due *by* that day, not at midnight.
-    return defaultDay === undefined ? '' : `${defaultDay}T23:59`;
+    if (seed.due != null) return toDateTimeLocal(seed.due);
+
+    /*
+      A rule needs something to count from. `changeRepeat` supplies that when you
+      pick a preset by hand, but a rule can also arrive already made — quick
+      capture parsing "every 2 days" — and without this the headline sentence of
+      that feature produces a form that cannot be saved.
+    */
+    const dated = seed.start != null || seed.startDate != null;
+    return seed.rrule != null && !dated ? endOfToday() : '';
   });
-  const [rrule, setRrule] = useState<string | null>(initial?.rrule ?? null);
+  const [rrule, setRrule] = useState<string | null>(seed.rrule ?? null);
 
   /**
    * Turning on a repeat gives the item today's date if it has none.
@@ -125,16 +160,14 @@ export function ItemForm({
     const hasDate = due !== '' || start !== '' || startDate !== '';
     if (hasDate) return;
 
-    const endOfToday = new Date();
-    endOfToday.setHours(23, 59, 0, 0);
-    setDue(toDateTimeLocal(endOfToday.getTime()));
+    setDue(endOfToday());
   }
 
-  const [mode, setMode] = useState<ScheduleMode>(modeOf(initial));
-  const [start, setStart] = useState(initial?.start != null ? toDateTimeLocal(initial.start) : '');
-  const [end, setEnd] = useState(initial?.end != null ? toDateTimeLocal(initial.end) : '');
-  const [startDate, setStartDate] = useState(initial?.startDate ?? '');
-  const [endDate, setEndDate] = useState(initial?.endDate ?? '');
+  const [mode, setMode] = useState<ScheduleMode>(modeOf(seed));
+  const [start, setStart] = useState(seed.start == null ? '' : toDateTimeLocal(seed.start));
+  const [end, setEnd] = useState(seed.end == null ? '' : toDateTimeLocal(seed.end));
+  const [startDate, setStartDate] = useState(seed.startDate ?? '');
+  const [endDate, setEndDate] = useState(seed.endDate ?? '');
 
   // Only the fields the chosen mode owns reach the database. Switching modes
   // leaves stale values in the inputs, which is convenient if you switch back —
@@ -194,7 +227,7 @@ export function ItemForm({
         placeholder="What needs doing?"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
-        autoFocus
+        autoFocus={autoFocusTitle}
       />
 
       <Segmented

@@ -11,7 +11,15 @@ export const DESTINATIONS: { key: Screen; label: string; icon: string }[] = [
 /** The phone shell. Replaced by `TopBar` above 768px — plan §3.8. */
 export function NavBar({ current }: { current: Screen }) {
   return (
-    <nav className="grid shrink-0 grid-cols-4 border-t border-[#28322B] bg-[#141A16] pt-2 pb-2 md:hidden">
+    /*
+      The bottom pad is the home indicator's strip, not decoration: with
+      `viewport-fit=cover` the app draws underneath it, and without this the
+      bottom row of labels sits behind the iOS gesture bar.
+    */
+    <nav
+      style={{ paddingBottom: 'calc(0.5rem + env(safe-area-inset-bottom))' }}
+      className="grid shrink-0 grid-cols-4 border-t border-[#28322B] bg-[#141A16] pt-2 md:hidden"
+    >
       {DESTINATIONS.map(({ key, label, icon }) => (
         <a
           key={key}

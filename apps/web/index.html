@@ -2,9 +2,27 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>web</title>
+
+    <!--
+      `viewport-fit=cover` lets the app draw into the notch and the home-indicator
+      area, which is what an installed app should do — and is why the shell then
+      has to pad itself with `env(safe-area-inset-*)`. Without the pad, the bottom
+      navbar sits underneath the home indicator.
+
+      `user-scalable=no` is deliberately absent: pinch-zoom is an accessibility
+      feature, and form inputs are already 16px so iOS has no reason to zoom on
+      focus.
+    -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+    <!-- Android tints its own chrome to match, so the app does not end in a seam. -->
+    <meta name="theme-color" content="#0A0E0C" />
+
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="icon" href="/logo.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png" />
+
+    <title>Corvonium</title>
   </head>
   <body>
     <div id="root"></div>

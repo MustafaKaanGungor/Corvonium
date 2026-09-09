@@ -10,3 +10,4 @@ export * from './validate';
 export * from './sessions';
 export * from './recurrence';
 export * from './calendar';
+export * from './capture/parse';

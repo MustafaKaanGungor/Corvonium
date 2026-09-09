@@ -1,12 +1,22 @@
-import { useState } from 'react';
-import { expandAll, type Item, type SeriesScope } from '@corvonium/shared';
+import { useEffect, useState } from 'react';
+import {
+  endOfLocalDay,
+  expandAll,
+  type Item,
+  type ItemEdit,
+  type SeriesScope,
+} from '@corvonium/shared';
 import { useItems, useProjects, useSessions } from './db/hooks';
 import { addItem, cancelSeries, editItem, editSeries, removeItem, setStatus } from './db/items';
 import { useNow } from './lib/useNow';
+import { usePwaUpdate } from './lib/usePwaUpdate';
+import { requestPersistence } from './lib/storage';
 import { useRoute } from './lib/router';
 import { NavBar } from './components/NavBar';
 import { TopBar } from './components/TopBar';
 import { Sheet } from './components/Sheet';
+import { UpdateBar } from './components/UpdateBar';
+import { AddSheet } from './features/items/AddSheet';
 import { ItemForm, type ItemDraft } from './features/items/ItemForm';
 import { SeriesChoice } from './features/items/SeriesChoice';
 import { CalendarScreen } from './features/calendar/CalendarScreen';
@@ -23,6 +33,17 @@ export default function App() {
   const { data: projects } = useProjects();
   const { data: sessions } = useSessions();
   const now = useNow();
+  const update = usePwaUpdate();
+
+  /*
+    Asked for once per launch. There is no server to restore from, so an evicted
+    origin loses everything — and a browser evicts a non-persistent one without
+    asking. A refusal is not an error: the app works either way, just closer to
+    the edge, and Settings reports which it got.
+  */
+  useEffect(() => {
+    void requestPersistence();
+  }, []);
 
   // A day key when the calendar opened the form, so it can prefill the date.
   const [adding, setAdding] = useState<string | true | null>(null);
@@ -85,6 +106,10 @@ export default function App() {
 
   const openItem = (item: Item) => setEditingId(item.id);
 
+  /** The calendar's selected day as starting values — a deadline that evening. */
+  const addPrefill: ItemEdit | undefined =
+    typeof adding === 'string' ? { due: endOfLocalDay(adding) ?? undefined } : undefined;
+
   /**
    * §3.2: adding from the calendar prefills the **selected day**, from anywhere
    * else it prefills today.
@@ -100,7 +125,20 @@ export default function App() {
   const liveSession = sessions?.find((s) => s.endedAt === null) ?? null;
 
   return (
-    <div className="flex h-dvh flex-col bg-[#0A0E0C] text-[#E8EFE9]">
+    /*
+      `viewport-fit=cover` in index.html lets the app draw into the notch and the
+      home-indicator strip, which is what an installed app should do — so the
+      shell has to pad itself back out of them. Left and right matter in
+      landscape; the bottom is handled by the navbar, which is what sits there.
+    */
+    <div
+      className="flex h-dvh flex-col bg-[#0A0E0C] text-[#E8EFE9]"
+      style={{
+        paddingLeft: 'env(safe-area-inset-left)',
+        paddingRight: 'env(safe-area-inset-right)',
+        paddingTop: 'env(safe-area-inset-top)',
+      }}
+    >
       <TopBar
         current={screen}
         liveSession={liveSession}
@@ -171,11 +209,15 @@ export default function App() {
           onClick={() => setAdding(true)}
           aria-label="Add item"
           // Inset from the edge: Android reads a back-swipe from both screen sides.
-          className="absolute right-5 bottom-[74px] grid h-13 w-13 md:hidden place-items-center rounded-full bg-[#4CC26A] pb-0.5 text-2xl text-[#06210F] shadow-lg shadow-[#4CC26A]/30"
+          // The bottom offset clears the navbar *and* the home indicator under it.
+          style={{ bottom: 'calc(74px + env(safe-area-inset-bottom))' }}
+          className="absolute right-5 grid h-13 w-13 md:hidden place-items-center rounded-full bg-[#4CC26A] pb-0.5 text-2xl text-[#06210F] shadow-lg shadow-[#4CC26A]/30"
         >
           +
         </button>
       )}
+
+      {update.ready && <UpdateBar onUpdate={update.update} />}
 
       <NavBar current={screen} />
 
@@ -188,22 +230,32 @@ export default function App() {
               onCancel={() => setPending(null)}
               onChoose={applyScope}
             />
+          ) : editing === null ? (
+            /* Adding: a capture line above the same form — §3.7. */
+            <AddSheet
+              projects={projects ?? []}
+              now={now}
+              prefill={addPrefill}
+              onSubmit={(draft) => {
+                addItem(draft);
+                closeItemSheet();
+              }}
+              onClose={closeItemSheet}
+            />
           ) : (
             <ItemForm
-              key={editing?.id ?? 'new'}
-              initial={editing ?? undefined}
-              defaultDay={typeof adding === 'string' ? adding : undefined}
+              key={editing.id}
+              initial={editing}
+              autoFocusTitle
               projects={projects ?? []}
               onSubmit={(draft) => {
                 // Anything that repeats asks which occurrences it means first.
                 if (series !== null) return setPending({ verb: 'Save', draft });
-                if (editing) editItem(editing.id, draft);
-                else addItem(draft);
+                editItem(editing.id, draft);
                 closeItemSheet();
               }}
               onClose={closeItemSheet}
               onSetStatus={(status) => {
-                if (!editing) return;
                 if (series !== null && status === 'cancelled') {
                   return setPending({ verb: 'Cancel' });
                 }
@@ -211,7 +263,6 @@ export default function App() {
                 closeItemSheet();
               }}
               onDelete={() => {
-                if (!editing) return;
                 // Deleting reaches the real document: an occurrence has none of
                 // its own, so the series is what there is to delete.
                 removeItem(series?.id ?? editing.id);

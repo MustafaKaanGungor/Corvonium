@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { Project } from '@corvonium/shared';
 import { addProject, editProject, removeProject } from '../../db/projects';
+import { InstallSection } from './InstallSection';
 
 function rename(project: Project) {
   const next = window.prompt('Rename project', project.name)?.trim();
@@ -78,6 +79,8 @@ export function SettingsSheet({ projects, onClose }: { projects: Project[]; onCl
           </ul>
         )}
       </section>
+
+      <InstallSection />
 
       <button onClick={onClose} className="w-full rounded-lg bg-[#1C241E] px-4 py-2 text-[#E8EFE9]">
         Close

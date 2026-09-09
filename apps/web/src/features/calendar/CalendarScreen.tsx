@@ -191,7 +191,8 @@ export function CalendarScreen({ items, projects, sessions, now, onOpen, onAdd }
       <button
         onClick={() => onAdd(selected)}
         aria-label="Add item on the selected day"
-        className="absolute right-5 bottom-[74px] grid h-13 w-13 place-items-center rounded-full bg-[#4CC26A] pb-0.5 text-2xl text-[#06210F] shadow-lg shadow-[#4CC26A]/30 md:hidden"
+        style={{ bottom: 'calc(74px + env(safe-area-inset-bottom))' }}
+        className="absolute right-5 grid h-13 w-13 place-items-center rounded-full bg-[#4CC26A] pb-0.5 text-2xl text-[#06210F] shadow-lg shadow-[#4CC26A]/30 md:hidden"
       >
         +
       </button>

@@ -1,3 +1,13 @@
 packages:
   - 'apps/*'
   - 'packages/*'
+
+# pnpm gates package install scripts by default, which is a supply-chain guard
+# worth keeping — so each exception is recorded here rather than approved
+# interactively, because CI has to make the same decision.
+#
+# `sharp` renders the PWA icons from `apps/web/public/logo.svg`. It ships prebuilt
+# binaries and its install script only puts the right one in place. Dev-only: the
+# generated icons are committed, so no production build ever needs it.
+allowBuilds:
+  sharp: true
