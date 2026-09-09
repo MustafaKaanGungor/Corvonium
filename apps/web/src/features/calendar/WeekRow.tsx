@@ -76,17 +76,30 @@ export function WeekRow({
             <button
               key={day}
               onClick={() => (day === selected ? onOpenDay(day) : onSelect(day))}
-              className={`relative overflow-hidden rounded-[7px] pt-[5px] text-left ${
+              /*
+                `flex flex-col items-start` rather than a plain block: a `<button>`
+                vertically centres its own content by UA style, which put the day
+                number in the middle of the cell with the bricks drawn over it.
+                `text-left` fixes only the horizontal half of the same problem.
+              */
+              className={`relative flex flex-col items-start overflow-hidden rounded-[7px] pt-[5px] text-left ${
                 outside ? 'bg-transparent' : 'bg-[#141A16]'
               } ${day === selected ? 'shadow-[inset_0_0_0_1.5px_#2E7D46]' : ''}`}
             >
+              {/*
+                Every day number sits in the *same* fixed box, whether or not it is
+                today. Letting the digit decide its own position put single digits
+                at one centre and double digits ~3px further right, so the today
+                circle — a fixed 20px — could not line up with both. Now it is
+                concentric with the number by construction.
+              */}
               <span
-                className={`block pl-[9px] text-[11.5px] tabular-nums ${
-                  outside ? 'text-[#5F6E66]/40' : 'text-[#8A9990]'
-                } ${
+                className={`ml-[4px] grid h-5 w-5 shrink-0 place-items-center text-[11.5px] tabular-nums ${
                   day === today
-                    ? 'ml-[5px] h-5 w-5 rounded-full bg-[#4CC26A] pl-0 text-center leading-5 font-bold text-[#06210F]'
-                    : ''
+                    ? 'rounded-full bg-[#4CC26A] font-bold text-[#06210F]'
+                    : outside
+                      ? 'text-[#5F6E66]/40'
+                      : 'text-[#8A9990]'
                 }`}
               >
                 {Number(day.slice(8))}
@@ -122,6 +135,16 @@ export function WeekRow({
               const project = projects.find((p) => p.id === item.projectId);
               const colour = project?.color ?? '#4CC26A';
 
+              /*
+                A brick lands in the neighbouring month's leading or trailing days
+                only if it touches *none* of this month's — a bar running 30
+                September into 2 October still belongs to the month you are
+                looking at and stays at full strength.
+              */
+              const outsideMonth = !days
+                .slice(brick.colStart - 1, brick.colEnd - 1)
+                .some((day) => monthOf(day) === month);
+
               const resolved = item.status !== 'open';
               const missed = isMissed(item, now);
               // A bare deadline is an instant, not a stretch — drawn as an outline
@@ -144,9 +167,12 @@ export function WeekRow({
                     borderBottomRightRadius: brick.continuesRight ? 0 : undefined,
                     marginLeft: brick.continuesLeft ? 0 : 2,
                     marginRight: brick.continuesRight ? 0 : 2,
+                    // One value rather than fighting opacity classes: a finished
+                    // item in next month is dimmer still than either alone.
+                    opacity: (resolved ? 0.35 : 1) * (outsideMonth ? 0.4 : 1),
                   }}
                   className={`h-4 truncate rounded px-[7px] text-[10.5px] leading-4 font-semibold ${
-                    resolved ? 'line-through opacity-35' : ''
+                    resolved ? 'line-through' : ''
                   } ${missed && !resolved ? 'ring-1 ring-[#D9614F]' : ''}`}
                 >
                   {brick.continuesLeft ? '‹ ' : ''}

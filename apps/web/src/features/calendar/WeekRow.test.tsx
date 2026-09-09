@@ -62,6 +62,14 @@ function row(items: Item[], over: Partial<Parameters<typeof WeekRow>[0]> = {}) {
 
 const brick = (title: string) => screen.getByTitle(title);
 
+/** The layout classes on a day-number box, normalised so two can be compared. */
+const geometry = (cls: string) =>
+  cls
+    .split(' ')
+    .filter((c) => /^(ml-|h-|w-|place-items-|grid$)/.test(c))
+    .toSorted()
+    .join(' ');
+
 /*
   `calendar.test.ts` proves the layout arithmetic. This file covers the glue: that
   those numbers actually reach `grid-column` and `grid-row`, which is where a
@@ -109,7 +117,7 @@ describe('the four brick signals stay on four channels', () => {
   it('dims and strikes through something already done', () => {
     row([bar('Sprint', '2026-09-08', '2026-09-08', { status: 'done' })]);
     expect(brick('Sprint').className).toContain('line-through');
-    expect(brick('Sprint').className).toContain('opacity-35');
+    expect(Number(brick('Sprint').style.opacity)).toBeCloseTo(0.35);
   });
 
   it('rings a missed item without touching its colour', () => {
@@ -152,10 +160,71 @@ describe('modes are exclusive', () => {
   });
 });
 
+describe('days outside the month fade back', () => {
+  it('dims a brick sitting only in the trailing days', () => {
+    // The row 28 Sep – 4 Oct, viewed as September: an item on 2 October is
+    // context, not content.
+    row([bar('October thing', '2026-10-02', '2026-10-02')], { weekStart: '2026-09-28' });
+    expect(Number(brick('October thing').style.opacity)).toBeCloseTo(0.4);
+  });
+
+  it('leaves an item inside the month at full strength', () => {
+    row([bar('September thing', '2026-09-28', '2026-09-28')], { weekStart: '2026-09-28' });
+    expect(brick('September thing').style.opacity).toBe('1');
+  });
+
+  it('does not dim a bar that merely runs out of the month', () => {
+    // 30 September into 2 October still belongs to the month being looked at.
+    row([bar('Crossing', '2026-09-30', '2026-10-02')], { weekStart: '2026-09-28' });
+    expect(brick('Crossing').style.opacity).toBe('1');
+  });
+
+  it('dims a finished item further still', () => {
+    row([bar('Done next month', '2026-10-02', '2026-10-02', { status: 'done' })], {
+      weekStart: '2026-09-28',
+    });
+    expect(Number(brick('Done next month').style.opacity)).toBeCloseTo(0.14);
+  });
+});
+
 describe('the cells themselves', () => {
   it('always draws seven, however empty the week', () => {
     row([]);
     expect(screen.getAllByRole('button')).toHaveLength(7);
+  });
+
+  it('puts the day number at the top, not floating in the middle', () => {
+    /*
+      A `<button>` vertically centres its own content by UA style, which dropped
+      the number into the middle of the cell with bricks drawn over it. jsdom does
+      not reproduce that layout, so this pins the *rule* that prevents it.
+    */
+    row([]);
+    const cell = screen.getByRole('button', { name: '8' });
+    expect(cell.className).toContain('flex-col');
+    expect(cell.className).toContain('items-start');
+  });
+
+  it('gives every day number the same box, whatever its width', () => {
+    /*
+      Letting the digit size its own box put single digits at one centre and
+      double digits ~3px right of it, so the fixed-size today circle could not be
+      concentric with both. jsdom does not lay this out, so the test pins the rule:
+      one geometry for every day, today differing only in colour.
+    */
+    row([]);
+
+    const boxes = ['7', '8', '9', '12', '13'].map(
+      (n) => screen.getByRole('button', { name: n }).querySelector('span')?.className ?? '',
+    );
+    expect(new Set(boxes.map(geometry)).size).toBe(1);
+  });
+
+  it('marks today with colour alone, never with a different size or offset', () => {
+    row([]);
+    const todayCell = screen.getByRole('button', { name: '8' }).querySelector('span');
+    expect(todayCell?.className).toContain('rounded-full');
+    expect(todayCell?.className).toContain('bg-[#4CC26A]');
   });
 
   it('dims days belonging to the neighbouring month', () => {

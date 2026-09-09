@@ -29,6 +29,7 @@ export function DayPanel({
   projects,
   now,
   onOpen,
+  onClose,
 }: {
   day: string;
   mode: CalendarMode;
@@ -37,6 +38,7 @@ export function DayPanel({
   projects: Project[];
   now: number;
   onOpen: (item: Item) => void;
+  onClose: () => void;
 }) {
   const heading = new Date(`${day}T12:00`).toLocaleDateString('en-GB', {
     weekday: 'long',
@@ -50,7 +52,20 @@ export function DayPanel({
 
   return (
     <div className="flex max-h-[70vh] flex-col md:max-h-none">
-      <p className="shrink-0 text-sm font-semibold">{heading}</p>
+      {/*
+        A visible way out, as the prototype's `.closex`. Clicking outside works
+        too, but a panel with no button on it looks like it has no exit.
+      */}
+      <div className="flex shrink-0 items-start justify-between gap-3">
+        <p className="text-sm font-semibold">{heading}</p>
+        <button
+          onClick={onClose}
+          aria-label="Close"
+          className="-mt-1 -mr-1 shrink-0 rounded-lg px-2 py-1 text-[15px] text-[#5F6E66]"
+        >
+          ✕
+        </button>
+      </div>
       <p className="mt-0.5 mb-3 shrink-0 text-[11.5px] text-[#8A9990]">
         {mode === 'plan'
           ? `${onDay.length} item${onDay.length === 1 ? '' : 's'}`

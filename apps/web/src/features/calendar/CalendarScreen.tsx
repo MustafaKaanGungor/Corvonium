@@ -205,6 +205,7 @@ export function CalendarScreen({ items, projects, sessions, now, onOpen, onAdd }
             sessions={sessions}
             projects={projects}
             now={now}
+            onClose={() => setPanelOpen(false)}
             onOpen={(item) => {
               setPanelOpen(false);
               onOpen(item);
