@@ -1,11 +1,6 @@
 import { useEffect, useState } from 'react';
+import { useInstallPrompt } from '../../lib/installPrompt';
 import { formatBytes, requestPersistence, type StorageState } from '../../lib/storage';
-
-/** The event Chrome fires when the app is installable. Not in lib.dom yet. */
-type InstallPrompt = Event & {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
-};
 
 /** Running as an installed app rather than in a browser tab. */
 function isStandalone(): boolean {
@@ -17,49 +12,47 @@ function isStandalone(): boolean {
 }
 
 /**
+ * What to do when there is no install button to offer.
+ *
+ * Only Chromium browsers fire `beforeinstallprompt`, and only once they judge the
+ * app installable — Safari and Firefox never do. So the button is the exception,
+ * and the useful fallback is the steps for the browser you are actually in.
+ */
+function manualInstallHint(): string {
+  const ua = navigator.userAgent;
+
+  // iPadOS reports itself as a Mac; the touch points give it away.
+  const ios = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+  if (ios) return 'To install: tap Share, then “Add to Home Screen”.';
+
+  if (/Firefox/.test(ua)) {
+    return /Android/.test(ua)
+      ? 'To install: open the ⋮ menu, then “Install”.'
+      : 'Firefox on desktop cannot install apps — open this page in Chrome or Edge to install it.';
+  }
+
+  if (/Android/.test(ua))
+    return 'To install: open the ⋮ menu, then “Add to Home screen” or “Install app”.';
+
+  if (/Edg\//.test(ua)) return 'To install: open the ⋯ menu, then Apps → “Install Corvonium”.';
+
+  return 'To install: use the install icon at the right of the address bar, or the browser menu → “Install Corvonium”.';
+}
+
+/**
  * Installing the app, and whether its data is safe where it sits.
  *
  * Both belong in Settings for the same reason: they are facts about this device
- * that are otherwise invisible. Chrome's own install prompt is a mini-infobar
- * that is easy to miss, and storage persistence is granted or refused silently.
+ * that are otherwise invisible. Storage persistence is granted or refused
+ * silently, and the browser's own install entry is easy to miss.
  */
 export function InstallSection() {
-  const [prompt, setPrompt] = useState<InstallPrompt | null>(null);
-  const [installed, setInstalled] = useState(() => isStandalone());
+  const { canInstall, justInstalled, install } = useInstallPrompt();
   const [storage, setStorage] = useState<StorageState | null>(null);
-
-  useEffect(() => {
-    // Chrome fires this instead of showing its own banner once the event is
-    // captured, so holding it is what puts the choice on a button here.
-    function onPrompt(event: Event) {
-      event.preventDefault();
-      setPrompt(event as InstallPrompt);
-    }
-
-    function onInstalled() {
-      setInstalled(true);
-      setPrompt(null);
-    }
-
-    window.addEventListener('beforeinstallprompt', onPrompt);
-    window.addEventListener('appinstalled', onInstalled);
-
-    return () => {
-      window.removeEventListener('beforeinstallprompt', onPrompt);
-      window.removeEventListener('appinstalled', onInstalled);
-    };
-  }, []);
 
   useEffect(() => {
     void requestPersistence().then(setStorage);
   }, []);
-
-  async function install() {
-    if (prompt === null) return;
-    await prompt.prompt();
-    // One shot: the event cannot be reused whichever way the choice went.
-    setPrompt(null);
-  }
 
   return (
     <section className="space-y-2">
@@ -67,9 +60,9 @@ export function InstallSection() {
         This device
       </h3>
 
-      {installed ? (
+      {justInstalled || isStandalone() ? (
         <p className="text-xs text-[#8A9990]">Installed as an app.</p>
-      ) : prompt !== null ? (
+      ) : canInstall ? (
         <button
           onClick={() => void install()}
           className="w-full rounded-lg bg-[#4CC26A] px-4 py-2 text-sm font-semibold text-[#06210F]"
@@ -77,10 +70,7 @@ export function InstallSection() {
           Install Corvonium
         </button>
       ) : (
-        <p className="text-xs text-[#5F6E66]">
-          Not installable here — use the browser&rsquo;s own install option, or open the app over
-          HTTPS.
-        </p>
+        <p className="text-xs text-[#8A9990]">{manualInstallHint()}</p>
       )}
 
       {/*
