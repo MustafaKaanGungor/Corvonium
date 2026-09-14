@@ -1,0 +1,57 @@
+name: Deploy
+
+# Publishes apps/web to GitHub Pages at corvonium.mustafakaangungor.net. The custom
+# domain lives in the repo's Pages settings — an Actions deployment does not read a
+# CNAME file, so there is none in the build.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deployment at a time; a newer push replaces a queued one, but never cancels
+# a deployment that is already going out.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # The same gate as CI, so a broken commit never reaches the installed app —
+      # a phone picks up whatever is deployed the next time it offers an update.
+      - run: pnpm typecheck
+      - run: pnpm test
+
+      - run: pnpm --filter @corvonium/web build
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: apps/web/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
