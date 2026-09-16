@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   dayTotals,
   expandRange,
@@ -88,9 +88,13 @@ export function CalendarScreen({ items, projects, sessions, now, onOpen, onAdd }
   const from = new Date(`${range.from}T00:00`).getTime();
   const to = new Date(`${range.to}T23:59:59`).getTime();
 
-  const visible = expandRange(items, from, to)
-    .filter((item) => itemSpan(item) !== null)
-    .filter((item) => project === null || item.projectId === project);
+  // Memoised on the window, so a clock tick or opening the day panel does not
+  // re-expand a whole grid's worth of occurrences. The project filter is cheap.
+  const spanned = useMemo(
+    () => expandRange(items, from, to).filter((item) => itemSpan(item) !== null),
+    [items, from, to],
+  );
+  const visible = spanned.filter((item) => project === null || item.projectId === project);
 
   const effort = dayTotals(sessions, now);
 

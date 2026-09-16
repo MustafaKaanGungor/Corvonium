@@ -56,6 +56,12 @@ function fromUtcNaive(d: Date): number {
  * Adding `days * 86_400_000` would land an hour out across a clock change; going
  * through the local date fields keeps 09:00 at 09:00 on both sides.
  */
+/** Local midnight at the start of the day `ms` falls on. */
+function startOfLocalDay(ms: number): number {
+  const d = new Date(ms);
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+}
+
 function shiftDays(ms: number, days: number): number {
   const d = new Date(ms);
   return new Date(
@@ -359,7 +365,11 @@ export function nextOccurrence(series: Item, overrides: Item[], after: number): 
  * Backwards it reaches `MISSED_HORIZON_DAYS`, so every skipped occurrence inside
  * that window is its own missed row. Forwards it stops at the end of today **plus
  * one** occurrence per series, so a Monday-only routine is still findable and
- * editable on a Wednesday. The Calendar will want a wider window, which is what
+ * editable on a Wednesday.
+ *
+ * Both edges are whole days — the horizon opens at local midnight — so the result
+ * depends on `now` only through its **date**. That is what lets the app compute
+ * this once a day instead of on every clock tick. The Calendar will want a wider window, which is what
  * `expandSeries` takes a range for.
  *
  * The series document itself is never emitted. Its dates are the anchor for a
@@ -377,7 +387,7 @@ export function expandAll(items: Item[], now: number): Item[] {
       continue;
     }
 
-    const from = shiftDays(now, -MISSED_HORIZON_DAYS);
+    const from = startOfLocalDay(shiftDays(now, -MISSED_HORIZON_DAYS));
     const todayEnd = endOfLocalDay(localDate(now)) ?? now;
 
     out.push(...expandSeries(item, overrides, from, todayEnd));

@@ -358,6 +358,17 @@ describe('expandAll', () => {
     }
   });
 
+  it('gives the same list all day long, so it can be cached per day', () => {
+    // A 23:59 deadline is the worst case: the old instant-based horizon dropped the
+    // occurrence on the horizon day at 23:59 today, part-way through the day.
+    const series = item({ due: at(2020, 1, 1, 23, 59), rrule: 'FREQ=DAILY' });
+    const ids = (now: number) => expandAll([series], now).map((o) => o.id);
+
+    const morning = at(2026, 9, 8, 0, 1);
+    expect(ids(at(2026, 9, 8, 23, 59) + 59_000)).toEqual(ids(morning));
+    expect(ids(TUE)).toEqual(ids(morning));
+  });
+
   it('keeps a Monday routine reachable on a Wednesday', () => {
     // Anchored on a Monday, viewed on Wednesday the 9th: nothing falls today, but
     // the next occurrence must still be there to be edited.
