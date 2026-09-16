@@ -923,6 +923,15 @@ The parts most likely to break are pure functions, which is fortunate: they're t
 
 JSON export of every collection, and restore from it. Cheap to build, and it's the insurance policy against your own schema mistakes — the thing that lets you keep changing the model while real data is already in it. `.ics` export later, if calendar interop ever matters.
 
+**As built** (Settings → Data):
+
+- **The file** is `{ app, format, exportedAt, schemaVersions, data: { items, projects, sessions } }`, holding stored documents only (no occurrences, no RxDB meta). A file from a newer schema is refused rather than half-read; once a schema is bumped, import reuses that collection's `migrationStrategies`.
+- **Nothing is written until everything checks out.** The envelope is checked (`readBackup`), then every document against the app's own RxDB schemas (`db/schema/check.ts`). Production RxDB doesn't validate, so without this a damaged file would be stored and break a screen later.
+- **Import never acts blindly.** It shows this device and the file side by side, then offers **Merge**, **Use the file** or **Keep this device**.
+  - **Merge:** the newer `updatedAt` wins, a tie keeps the device's copy, and nothing is ever deleted. If both sides have a running session, the one last seen longer ago is ended at its `lastSeenAt`, the same answer the forgotten-session failsafe gives.
+  - **Use the file** asks again, names what will be lost, and offers to export this device first. If it fails part-way, it restores the snapshot read just before.
+- **The share sheet on phones, a download elsewhere.** Settings also shows "Last export: N days ago", because until sync exists that is the only warning that a lost phone means lost data.
+
 ### Search
 
 In-memory filtering over `items`. At a few thousand documents this is instant, needs no index and adds no dependency. Revisit only when it stops being instant.

@@ -274,7 +274,11 @@ export default function App() {
 
       <Sheet open={settingsOpen} onClose={() => setSettingsOpen(false)}>
         {settingsOpen && (
-          <SettingsSheet projects={projects ?? []} onClose={() => setSettingsOpen(false)} />
+          <SettingsSheet
+            projects={projects ?? []}
+            now={now}
+            onClose={() => setSettingsOpen(false)}
+          />
         )}
       </Sheet>
     </div>
