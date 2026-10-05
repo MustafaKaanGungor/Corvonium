@@ -5,5 +5,8 @@
     "suspicious": "warn",
     "perf": "warn"
   },
+  "rules": {
+    "no-underscore-dangle": ["warn", { "allow": ["_deleted"] }]
+  },
   "ignorePatterns": ["dist", "design", "node_modules"]
 }

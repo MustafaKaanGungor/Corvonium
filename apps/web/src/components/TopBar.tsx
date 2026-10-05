@@ -1,7 +1,26 @@
 import { sessionTotals, type Session } from '@corvonium/shared';
 import { formatDuration } from '../lib/format';
 import { href, type Screen } from '../lib/router';
+import { useSync } from '../db/sync';
+import { describeSync, TONE_COLOUR } from '../features/settings/syncText';
 import { DESTINATIONS } from './NavBar';
+
+function SyncLabel({ now }: { now: number }) {
+  const sync = useSync();
+  const { tone, label } = sync.configured
+    ? describeSync(sync.status, sync.lastSyncedAt, now)
+    : { tone: 'idle' as const, label: 'Local only' };
+
+  return (
+    <span className="flex items-center gap-1.5 text-[11.5px] text-[#8A9990]">
+      <span
+        className="block h-[7px] w-[7px] rounded-full"
+        style={{ background: TONE_COLOUR[tone] }}
+      />
+      {label}
+    </span>
+  );
+}
 
 type Props = {
   current: Screen;
@@ -45,14 +64,11 @@ export function TopBar({ current, liveSession, now, onAdd, onOpenSettings }: Pro
         {/*
           A running session takes this slot: it is the one thing happening *now*,
           and Work Mode is not a tab you can navigate back to from the nav above.
-          Otherwise "Local only", not "Synced" — there is no server until Phase 2,
-          and a green tick claiming otherwise would misrepresent where the data is.
+          Otherwise where the data is: "Local only" until this device is connected,
+          then the sync state — never a green tick that isn't true.
         */}
         {liveSession === null ? (
-          <span className="flex items-center gap-1.5 text-[11.5px] text-[#8A9990]">
-            <span className="block h-[7px] w-[7px] rounded-full bg-[#5F6E66]" />
-            Local only
-          </span>
+          <SyncLabel now={now} />
         ) : (
           <a
             href={href('work')}

@@ -1,0 +1,28 @@
+{
+  "name": "@corvonium/server",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/app.ts",
+    "./db": "./src/db.ts"
+  },
+  "scripts": {
+    "build": "esbuild src/index.ts --bundle --platform=node --target=node24 --format=esm --outfile=dist/server.mjs --external:fastify --external:@fastify/cors",
+    "start": "node dist/server.mjs",
+    "token": "node dist/server.mjs --print-token",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@corvonium/shared": "workspace:*",
+    "@fastify/cors": "^11.3.0",
+    "fastify": "^5.12.4"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.3",
+    "esbuild": "^0.28.2",
+    "typescript": "~7.0.2",
+    "vitest": "^4.1.11"
+  }
+}

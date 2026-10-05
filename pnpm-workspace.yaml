@@ -9,5 +9,9 @@ packages:
 # `sharp` renders the PWA icons from `apps/web/public/logo.svg`. It ships prebuilt
 # binaries and its install script only puts the right one in place. Dev-only: the
 # generated icons are committed, so no production build ever needs it.
+#
+# `esbuild` bundles the sync server into one file. Same shape: a prebuilt binary
+# per platform, and an install script that only checks the right one is present.
 allowBuilds:
   sharp: true
+  esbuild: true

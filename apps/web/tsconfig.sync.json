@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.sync.tsbuildinfo",
+    // The two-device sync tests start the real server in-process, so they run on
+    // Node and need its types; the app itself must never see them.
+    "types": ["node", "vite/client"]
+  },
+  "include": ["src/**/*.scenarios.test.ts"],
+  "exclude": []
+}

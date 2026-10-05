@@ -57,6 +57,7 @@ function latest(comparison: Comparison, key: 'lastChangeHere' | 'lastChangeInFil
  * `mergeWrites` and a replace actually do.
  */
 export function ImportReview({
+  syncOn = false,
   comparison,
   exportedAt,
   busy,
@@ -65,6 +66,8 @@ export function ImportReview({
   onExportFirst,
   onCancel,
 }: {
+  /** With sync on, whatever the import writes or deletes reaches every device. */
+  syncOn?: boolean;
   comparison: Comparison;
   exportedAt: number;
   busy: boolean;
@@ -112,6 +115,11 @@ export function ImportReview({
       <p className="mt-0.5 text-[11.5px] text-[#8A9990]">
         File exported {stamp.format(exportedAt)}
       </p>
+      {syncOn && (
+        <p className="mt-2 rounded-lg border border-[#E0A040]/40 bg-[#E0A040]/10 px-3 py-2 text-xs text-[#E0A040]">
+          Sync is on: whatever this changes will change on every device.
+        </p>
+      )}
     </div>
   );
 

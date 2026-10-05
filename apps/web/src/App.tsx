@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useItems, useProjects, useSessions } from './db/hooks';
+import { resumeSync } from './db/sync';
 import { useExpanded } from './lib/useExpanded';
 import { useNow } from './lib/useNow';
 import { usePwaUpdate } from './lib/usePwaUpdate';
@@ -37,6 +38,8 @@ export default function App() {
   */
   useEffect(() => {
     void requestPersistence();
+    // A device that was connected before picks sync back up on every launch.
+    resumeSync();
   }, []);
 
   const [settingsOpen, setSettingsOpen] = useState(false);

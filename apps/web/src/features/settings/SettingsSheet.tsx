@@ -6,6 +6,8 @@ import { exportBackup, lastExportAt, prepareImport, type ImportReviewData } from
 import { DataSection, type Notice } from './DataSection';
 import { ImportReview } from './ImportReview';
 import { InstallSection } from './InstallSection';
+import { SyncSection } from './SyncSection';
+import { connectSync, disconnectSync, syncNow, useSync } from '../../db/sync';
 
 function rename(project: Project) {
   const next = window.prompt('Rename project', project.name)?.trim();
@@ -41,6 +43,7 @@ export function SettingsSheet({
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<Notice | null>(null);
   const [lastExport, setLastExport] = useState(lastExportAt);
+  const sync = useSync();
 
   function submit() {
     const trimmed = name.trim();
@@ -79,6 +82,7 @@ export function SettingsSheet({
   if (review !== null) {
     return (
       <ImportReview
+        syncOn={sync.configured}
         comparison={review.comparison}
         exportedAt={review.backup.exportedAt}
         busy={busy}
@@ -156,6 +160,14 @@ export function SettingsSheet({
           </ul>
         )}
       </section>
+
+      <SyncSection
+        sync={sync}
+        now={now}
+        onConnect={connectSync}
+        onDisconnect={disconnectSync}
+        onSyncNow={syncNow}
+      />
 
       <DataSection
         now={now}

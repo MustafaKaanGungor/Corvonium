@@ -7,6 +7,7 @@ import {
   type Session,
   type TodayGroup,
 } from '@corvonium/shared';
+import { SyncDot } from '../../components/SyncDot';
 import { ItemRowStatic } from '../items/ItemRowStatic';
 import { startSession } from '../../db/sessions';
 import { formatDuration } from '../../lib/format';
@@ -123,9 +124,10 @@ export function TodayView({ items, projects, now, liveSession, onOpen, onOpenSet
         <button
           onClick={onOpenSettings}
           aria-label="Settings"
-          className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-[#28322B] text-sm text-[#8A9990] md:hidden"
+          className="relative grid h-8 w-8 shrink-0 place-items-center rounded-full border border-[#28322B] text-sm text-[#8A9990] md:hidden"
         >
-          ⚙
+          ⚙{/* The phone has no top bar, so the sync state rides on the gear. */}
+          <SyncDot className="absolute -top-px -right-px ring-2 ring-[#0A0E0C]" />
         </button>
       </header>
 
